@@ -1,9 +1,12 @@
+# Atividade Unidade 1
 
-<!DOCTYPE html>
-<html>
+Este é um simples site feito por mim em inglês, para treinar minhas habilidades no inglês. O site não possui muitos objetivos, mas sim realizar a atividade e obter uma boa nota. 
 
+## Sobre o Site
 
-<h1>Atividade unidade 1</h1>
-  <p>Esse é um simples site feito por mim em ingles, para treinar minhas habilidades no ingles.</p>
-<p>O site não possui muito objetivos, mas sim realizar a atividade e possuir uma boa nota.</p>
-<p>De inicio o site possui uma apresentação sobre mim e logo apos um blog(que aparece após adicionar seu nome e sobrenome) com alguns links de noticias sobre noticias.</p>
+- O site possui uma apresentação sobre mim.
+- Logo após, há um blog (que aparece após adicionar seu nome e sobrenome) com alguns links de notícias sobre notícias.
+
+## Acesse o site
+
+Você pode acessar o site [aqui](https://github.com/pvgustavosampaio/pvgustavosampaio.github.io/blob/main/blogs.html).
