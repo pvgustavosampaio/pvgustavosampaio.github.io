@@ -1,12 +1,33 @@
-# Atividade Unidade 1
+# Talento Tech - Projetos
 
-Este é um simples site feito por mim em inglês, para treinar minhas habilidades no inglês. O site não possui muitos objetivos, mas sim realizar a atividade e obter uma boa nota. 
+Este repositório contém diversas atividades realizadas durante o curso Talento Tech. Abaixo estão descrições detalhadas e guias para cada um dos projetos incluídos.
 
-## Sobre o Site
+## Projetos
 
-- O site possui uma apresentação sobre mim.
-- Logo após, há um blog (que aparece após adicionar seu nome e sobrenome) com alguns links de notícias sobre notícias.
+### 1. App Layout
+- **Descrição:** Projeto de layout de aplicativo utilizando Flutter.
 
-## Acesse o site
 
-Você pode acessar o site [aqui](https://github.com/pvgustavosampaio/pvgustavosampaio.github.io/blob/main/blogs.html).
+### 2. Calculadora Web
+- **Descrição:** Uma calculadora web desenvolvida com Flutter.
+
+
+### 3. HTML Code
+- **Descrição:** Projeto HTML com duas páginas:
+  - **Página principal:** Apresentação pessoal e introdução ao curso Talento Tech.
+  - **Blogs:** Links para notícias tecnológicas.
+
+
+### 4. Jogo da Velha
+- **Descrição:** Um jogo da velha desenvolvido com Flutter.
+
+
+
+
+## Contato
+
+Para quaisquer dúvidas ou sugestões, por favor, entre em contato.
+
+---
+
+ Gustavo Sampaio
