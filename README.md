@@ -24,13 +24,7 @@ Este repositório contém diversas atividades realizadas durante o curso Talento
 - **Descrição:** Um jogo da velha desenvolvido com Flutter.
 - **Guia:** Abra o arquivo `Jogo da Velha/index.html` no navegador para jogar.
 
-## Como Contribuir
 
-1. Faça um fork deste repositório.
-2. Crie uma nova branch: `git checkout -b minha-nova-branch`.
-3. Faça suas alterações e commit: `git commit -m 'Adiciona nova funcionalidade'`.
-4. Envie suas alterações para o repositório remoto: `git push origin minha-nova-branch`.
-5. Abra um pull request.
 
 ## Contato
 
