@@ -7,8 +7,6 @@
 <!-- Bibliotecas amCharts -->
 <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
-<script src="https://cdn.amcharts.com/lib/5/geodata/brazilHigh.js"></script>
-<script src="https://cdn.amcharts.com/lib/5/geodata/region/br-prHigh.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
 
 <style>
@@ -36,45 +34,49 @@
 
 <script>
 am5.ready(function() {
-  // Cria o elemento raiz
-  var root = am5.Root.new("mapa-parana");
-
-  root.setThemes([am5themes_Animated.new(root)]);
 
   // Cria o mapa
+  var root = am5.Root.new("mapa-parana");
+  root.setThemes([am5themes_Animated.new(root)]);
+
   var chart = root.container.children.push(am5map.MapChart.new(root, {
+    projection: am5map.geoMercator(),
     panX: "translateX",
     panY: "translateY",
-    wheelY: "zoom",
-    projection: am5map.geoMercator()
+    wheelY: "zoom"
   }));
 
-  // Série dos municípios do Paraná
-  var polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root, {
-    geoJSON: am5geodata_region_br_prHigh
-  }));
+  // URL GeoJSON IBGE (Paraná completo)
+  var geoUrl = "https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-41-mun.json";
 
-  // Estilo dos municípios
-  polygonSeries.mapPolygons.template.setAll({
-    tooltipText: "{name}",
-    interactive: true,
-    fill: am5.color(0xa5d6a7),
-    stroke: am5.color(0x33691e),
-    strokeWidth: 0.3
-  });
+  fetch(geoUrl)
+    .then(response => response.json())
+    .then(data => {
 
-  // Efeito hover
-  polygonSeries.mapPolygons.template.states.create("hover", {
-    fill: am5.color(0x43a047)
-  });
+      var polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root, {
+        geoJSON: data
+      }));
 
-  // Clique no município
-  polygonSeries.mapPolygons.template.events.on("click", function(ev) {
-    const nomeMunicipio = ev.target.dataItem.dataContext.name;
-    alert("Você clicou em " + nomeMunicipio);
-  });
+      polygonSeries.mapPolygons.template.setAll({
+        tooltipText: "{name}",
+        interactive: true,
+        fill: am5.color(0xa5d6a7),
+        stroke: am5.color(0x33691e),
+        strokeWidth: 0.2
+      });
 
-  // Zoom inicial focado no Paraná
+      polygonSeries.mapPolygons.template.states.create("hover", {
+        fill: am5.color(0x43a047)
+      });
+
+      polygonSeries.mapPolygons.template.events.on("click", function(ev) {
+        const nome = ev.target.dataItem.dataContext.name;
+        alert("Você clicou em " + nome);
+      });
+
+    })
+    .catch(err => console.error("Erro ao carregar mapa:", err));
+
   chart.appear(1000, 100);
 });
 </script>
