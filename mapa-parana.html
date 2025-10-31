@@ -2,33 +2,59 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Mapa do Paraná</title>
+<title>Mapa Interativo do Paraná</title>
+
+<!-- Bibliotecas amCharts -->
 <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
-<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/geodata/brazilHigh.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/geodata/region/br-prHigh.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
 <style>
-html, body { width:100%; height:100%; margin:0; background:#f0f8f5; }
-#mapa { width:100%; height:100%; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background: #f0f8f5;
+    font-family: Arial, sans-serif;
+  }
+
+  #mapa-parana {
+    width: 100%;
+    height: 100vh;
+  }
+
+  .am5-tooltip {
+    font-size: 13px;
+  }
 </style>
 </head>
+
 <body>
-<div id="mapa"></div>
+<div id="mapa-parana"></div>
+
 <script>
 am5.ready(function() {
-  var root = am5.Root.new("mapa");
+  // Cria o elemento raiz
+  var root = am5.Root.new("mapa-parana");
+
   root.setThemes([am5themes_Animated.new(root)]);
 
+  // Cria o mapa
   var chart = root.container.children.push(am5map.MapChart.new(root, {
-    projection: am5map.geoMercator(),
+    panX: "translateX",
+    panY: "translateY",
+    wheelY: "zoom",
+    projection: am5map.geoMercator()
   }));
 
-  // Adiciona apenas o Paraná
+  // Série dos municípios do Paraná
   var polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root, {
     geoJSON: am5geodata_region_br_prHigh
   }));
 
+  // Estilo dos municípios
   polygonSeries.mapPolygons.template.setAll({
     tooltipText: "{name}",
     interactive: true,
@@ -37,13 +63,19 @@ am5.ready(function() {
     strokeWidth: 0.3
   });
 
+  // Efeito hover
   polygonSeries.mapPolygons.template.states.create("hover", {
     fill: am5.color(0x43a047)
   });
 
+  // Clique no município
   polygonSeries.mapPolygons.template.events.on("click", function(ev) {
-    alert("Você clicou em " + ev.target.dataItem.dataContext.name);
+    const nomeMunicipio = ev.target.dataItem.dataContext.name;
+    alert("Você clicou em " + nomeMunicipio);
   });
+
+  // Zoom inicial focado no Paraná
+  chart.appear(1000, 100);
 });
 </script>
 </body>
