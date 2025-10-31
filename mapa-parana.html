@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Mapa do Paraná</title>
+<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/geodata/brazilHigh.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/geodata/region/br-prHigh.js"></script>
+<style>
+html, body { width:100%; height:100%; margin:0; background:#f0f8f5; }
+#mapa { width:100%; height:100%; }
+</style>
+</head>
+<body>
+<div id="mapa"></div>
+<script>
+am5.ready(function() {
+  var root = am5.Root.new("mapa");
+  root.setThemes([am5themes_Animated.new(root)]);
+
+  var chart = root.container.children.push(am5map.MapChart.new(root, {
+    projection: am5map.geoMercator(),
+  }));
+
+  // Adiciona apenas o Paraná
+  var polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root, {
+    geoJSON: am5geodata_region_br_prHigh
+  }));
+
+  polygonSeries.mapPolygons.template.setAll({
+    tooltipText: "{name}",
+    interactive: true,
+    fill: am5.color(0xa5d6a7),
+    stroke: am5.color(0x33691e),
+    strokeWidth: 0.3
+  });
+
+  polygonSeries.mapPolygons.template.states.create("hover", {
+    fill: am5.color(0x43a047)
+  });
+
+  polygonSeries.mapPolygons.template.events.on("click", function(ev) {
+    alert("Você clicou em " + ev.target.dataItem.dataContext.name);
+  });
+});
+</script>
+</body>
+</html>
