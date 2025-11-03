@@ -2,8 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Mapa Interativo do Paraná — Regiões Coloridas</title>
+<title>Mapa Interativo do Paraná — IBGE Correto</title>
 
+<!-- Bibliotecas amCharts -->
 <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
@@ -23,7 +24,7 @@
 <body>
 <div id="mapa-parana"></div>
 <div id="legenda">
-  <h4>🗺️ Regiões do Paraná</h4>
+  <h4>🗺️ Regiões do Paraná (IBGE)</h4>
   <div class="grid">
     <div class="item"><span style="background:#FFD54F"></span>Noroeste</div>
     <div class="item"><span style="background:#4CAF50"></span>Norte Central</div>
@@ -40,14 +41,15 @@
 
 <script>
 am5.ready(async function() {
+
   const root = am5.Root.new("mapa-parana");
   root.setThemes([am5themes_Animated.new(root)]);
-
   const chart = root.container.children.push(am5map.MapChart.new(root,{
     projection: am5map.geoMercator(),
     panX:"translateX",panY:"translateY",wheelY:"zoom"
   }));
 
+  // 🎨 Paleta oficial de cores
   const coresPorRegiao={
     "Noroeste Paranaense":"#FFD54F",
     "Norte Central Paranaense":"#4CAF50",
@@ -61,38 +63,57 @@ am5.ready(async function() {
     "Metropolitana de Curitiba":"#E53935"
   };
 
-  // 🔗 GeoJSON com as fronteiras
-  const geoUrl="https://pvgustavosampaio.github.io/geojs-41-mun.json";
-  const geoData=await fetch(geoUrl).then(r=>r.json());
+  // ✅ GeoJSON do Paraná
+  const geoUrl = "https://pvgustavosampaio.github.io/geojs-41-mun.json";
+  const geoData = await fetch(geoUrl).then(r=>r.json());
 
-  // 🔗 Arquivo de regiões
-  const regioesResp=await fetch("https://pvgustavosampaio.github.io/regioes-pr.json");
-  const regioesMunicipios=await regioesResp.json();
+  // ✅ Regiões oficiais IBGE (arquivo completo que você tem)
+  const regioesResp = await fetch("https://pvgustavosampaio.github.io/regioes-pr.json");
+  const regioesMunicipios = await regioesResp.json();
 
-  // 🔤 Função de normalização (remove acentos e diferenças)
+  // 🔤 Normalizador (corrige acentos e diferenças)
   function normalizar(str){
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-      .replace(/['’`´]/g,"").replace(/-/g," ").toLowerCase().trim();
+    return str.normalize("NFD")
+      .replace(/[\u0300-\u036f]/g,"")
+      .replace(/['’`´]/g,"")
+      .replace(/-/g," ")
+      .replace(/\s+/g," ")
+      .toLowerCase()
+      .trim();
   }
 
+  // 🗺️ Desenha o mapa
   const polygonSeries=chart.series.push(am5map.MapPolygonSeries.new(root,{geoJSON:geoData}));
   polygonSeries.mapPolygons.template.setAll({
-    tooltipText:"{name}",interactive:true,stroke:am5.color(0xffffff),
-    strokeWidth:0.25,cursorOverStyle:"pointer"
+    tooltipText:"{name}",
+    interactive:true,
+    stroke:am5.color(0xffffff),
+    strokeWidth:0.25,
+    cursorOverStyle:"pointer"
   });
 
-  // 🎨 Colore conforme sub-região
+  // 🎨 Aplica as cores
   polygonSeries.events.on("datavalidated",function(){
     polygonSeries.mapPolygons.each(function(polygon){
-      const nomeCidade=polygon.dataItem.dataContext.name;
-      const nomeNormalizado=normalizar(nomeCidade);
-      let regiaoEncontrada=null;
-      for(const regiao in regioesMunicipios){
-        const lista=regioesMunicipios[regiao].map(c=>normalizar(c));
-        if(lista.includes(nomeNormalizado)){regiaoEncontrada=regiao;break;}
+      const nomeCidade = polygon.dataItem.dataContext.name;
+      const nomeNormalizado = normalizar(nomeCidade);
+      let regiaoEncontrada = null;
+
+      // Busca a cidade dentro da lista de cada região
+      for (const regiao in regioesMunicipios){
+        const listaNormalizada = regioesMunicipios[regiao].map(c=>normalizar(c));
+        if (listaNormalizada.includes(nomeNormalizado)){
+          regiaoEncontrada = regiao;
+          break;
+        }
       }
-      const cor=regiaoEncontrada&&coresPorRegiao[regiaoEncontrada]?coresPorRegiao[regiaoEncontrada]:"#C8E6C9";
-      polygon.set("fill",am5.color(cor));
+
+      // Define cor (ou padrão)
+      const cor = regiaoEncontrada && coresPorRegiao[regiaoEncontrada]
+        ? coresPorRegiao[regiaoEncontrada]
+        : "#C8E6C9";
+
+      polygon.set("fill", am5.color(cor));
     });
   });
 
