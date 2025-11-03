@@ -27,7 +27,7 @@ am5.ready(async function() {
   // ✅ Arquivo de regiões (verifique o link)
   let regioesMunicipios = {};
   try {
-    const resp = await fetch("https://raw.githubusercontent.com/gustavosampaio-dev/dados-parana/main/regioes-pr.json");
+    const regioesResp = await fetch("https://raw.githubusercontent.com/gustavosampaio-dev/pvgustavosampaio.github.io/main/regioes-pr.json");
     regioesMunicipios = await resp.json();
   } catch {
     console.warn("Arquivo regioes-pr.json não encontrado — usando fallback");
@@ -68,3 +68,4 @@ am5.ready(async function() {
   chart.appear(1000,100);
 });
 </script>
+
