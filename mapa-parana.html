@@ -63,7 +63,7 @@
 <body>
 <div id="mapa-parana"></div>
 
-<!-- 🌈 Legenda colorida -->
+<!-- 🌈 Legenda -->
 <div id="legenda">
   <h4>🗺️ Regiões do Paraná</h4>
   <div class="grid">
@@ -83,7 +83,6 @@
 <script>
 am5.ready(async function() {
 
-  // 🌎 Inicializa o mapa
   const root = am5.Root.new("mapa-parana");
   root.setThemes([am5themes_Animated.new(root)]);
 
@@ -94,7 +93,7 @@ am5.ready(async function() {
     wheelY: "zoom"
   }));
 
-  // 🎨 Paleta de cores por sub-região IBGE
+  // 🎨 Paleta de cores
   const coresPorRegiao = {
     "Noroeste Paranaense": "#FFD54F",
     "Norte Central Paranaense": "#4CAF50",
@@ -108,7 +107,7 @@ am5.ready(async function() {
     "Metropolitana de Curitiba": "#E53935"
   };
 
-  // ✅ GeoJSON confiável (baixado diretamente do IBGE via mirror)
+  // ✅ GeoJSON (Paraná)
   const geoUrl = "https://pvgustavosampaio.github.io/geojs-41-mun.json";
   let geoData;
   try {
@@ -120,7 +119,7 @@ am5.ready(async function() {
     return;
   }
 
-  // ✅ Regiões (link confirmado)
+  // ✅ Regiões (arquivo JSON acessível)
   let regioesMunicipios = {};
   try {
     const regioesResp = await fetch("https://pvgustavosampaio.github.io/regioes-pr.json");
@@ -130,7 +129,7 @@ am5.ready(async function() {
     console.warn("⚠️ Erro ao carregar regioes-pr.json:", e);
   }
 
-  // 🗺️ Desenha os municípios
+  // 🗺️ Renderiza o mapa
   const polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root, { geoJSON: geoData }));
 
   polygonSeries.mapPolygons.template.setAll({
@@ -141,14 +140,20 @@ am5.ready(async function() {
     cursorOverStyle: "pointer"
   });
 
-  // 🎨 Aplica as cores por região
+  // 🧩 Normalizador de nomes (remove acentos, padroniza)
+  function normalizarNome(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  }
+
+  // 🎨 Aplica cores conforme sub-região
   polygonSeries.events.on("datavalidated", function() {
     polygonSeries.mapPolygons.each(function(polygon) {
-      const nomeCidade = polygon.dataItem.dataContext.name;
+      const nomeCidade = normalizarNome(polygon.dataItem.dataContext.name);
       let regiaoEncontrada = null;
 
       for (const regiao in regioesMunicipios) {
-        if (regioesMunicipios[regiao].includes(nomeCidade)) {
+        const lista = regioesMunicipios[regiao].map(c => normalizarNome(c));
+        if (lista.includes(nomeCidade)) {
           regiaoEncontrada = regiao;
           break;
         }
@@ -159,12 +164,10 @@ am5.ready(async function() {
         : "#C8E6C9";
 
       polygon.set("fill", am5.color(cor));
-
-      if (!regiaoEncontrada) console.warn("Cidade sem região:", nomeCidade);
     });
   });
 
-  // ✨ Efeito hover
+  // ✨ Hover
   polygonSeries.mapPolygons.template.states.create("hover", {
     fill: am5.color(0x43a047),
     scale: 1.05,
@@ -172,7 +175,7 @@ am5.ready(async function() {
     shadowBlur: 6
   });
 
-  // 🖱️ Clique envia cidade para o Odoo
+  // 🖱️ Clique
   polygonSeries.mapPolygons.template.events.on("click", function(ev) {
     const nomeCidade = ev.target.dataItem.dataContext.name;
     window.parent.postMessage({ city: nomeCidade }, "*");
