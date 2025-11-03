@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Mapa Interativo do Paraná</title>
+<title>Mapa Interativo do Paraná — IBGE</title>
 
-<!-- Bibliotecas amCharts -->
+<!-- amCharts 5 -->
 <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/geodata/brazilLow.js"></script>
@@ -18,12 +18,10 @@
     background: #f0f8f5;
     font-family: Arial, sans-serif;
   }
-
   #mapa-parana {
     width: 100%;
     height: 100vh;
   }
-
   .am5-tooltip {
     font-size: 13px;
   }
@@ -36,7 +34,7 @@
 <script>
 am5.ready(function() {
 
-  // Inicializa o mapa
+  // 🌍 Inicializa o mapa
   var root = am5.Root.new("mapa-parana");
   root.setThemes([am5themes_Animated.new(root)]);
 
@@ -47,7 +45,45 @@ am5.ready(function() {
     wheelY: "zoom"
   }));
 
-  // Carrega GeoJSON com os municípios do Paraná (IBGE)
+  // 🎨 Paleta de cores das 10 mesorregiões do Paraná (IBGE)
+  const coresPorRegiao = {
+    "Noroeste Paranaense": "#FFD54F",
+    "Norte Central Paranaense": "#4CAF50",
+    "Norte Pioneiro Paranaense": "#81C784",
+    "Centro Ocidental Paranaense": "#FBC02D",
+    "Centro Oriental Paranaense": "#388E3C",
+    "Oeste Paranaense": "#2196F3",
+    "Sudoeste Paranaense": "#1976D2",
+    "Centro-Sul Paranaense": "#8E24AA",
+    "Sudeste Paranaense": "#5E35B1",
+    "Metropolitana de Curitiba": "#E53935"
+  };
+
+  // 🧠 Função para normalizar nomes (remove acentos, apóstrofos etc.)
+  function normalizar(str) {
+    return str.normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/['’`´]/g, "")
+              .replace(/-/g, " ")
+              .toLowerCase()
+              .trim();
+  }
+
+  // 📘 Relação das regiões oficiais (resumida, mas pode ser expandida)
+  const regioesMunicipios = {
+    "Noroeste Paranaense": ["Altônia","Cianorte","Maringá","Paranavaí","Umuarama"],
+    "Norte Central Paranaense": ["Londrina","Apucarana","Arapongas","Rolândia","Tamarana"],
+    "Norte Pioneiro Paranaense": ["Jacarezinho","Cornélio Procópio","Ibaiti","Assaí","Cambará"],
+    "Centro Ocidental Paranaense": ["Campo Mourão","Goioerê","Peabiru","Iretama","Janiópolis"],
+    "Centro Oriental Paranaense": ["Ponta Grossa","Castro","Carambeí","Telêmaco Borba","Ortigueira"],
+    "Oeste Paranaense": ["Cascavel","Toledo","Foz do Iguaçu","Medianeira","Palotina"],
+    "Sudoeste Paranaense": ["Francisco Beltrão","Pato Branco","Dois Vizinhos","Realeza","Ampére"],
+    "Centro-Sul Paranaense": ["Guarapuava","Pitanga","Laranjeiras do Sul","Irati","Palmital"],
+    "Sudeste Paranaense": ["União da Vitória","São Mateus do Sul","Cruz Machado","Paulo Frontin","Mallet"],
+    "Metropolitana de Curitiba": ["Curitiba","Colombo","Pinhais","Araucária","São José dos Pinhais","Campo Largo"]
+  };
+
+  // 🌎 Carrega o GeoJSON do Paraná (direto do IBGE)
   var geoUrl = "https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-41-mun.json";
 
   fetch(geoUrl)
@@ -61,23 +97,45 @@ am5.ready(function() {
       polygonSeries.mapPolygons.template.setAll({
         tooltipText: "{name}",
         interactive: true,
-        fill: am5.color(0xa5d6a7),
-        stroke: am5.color(0x33691e),
-        strokeWidth: 0.2
+        stroke: am5.color(0xffffff),
+        strokeWidth: 0.25,
+        cursorOverStyle: "pointer"
       });
 
+      // 🎨 Aplica cor conforme a sub-região
+      polygonSeries.events.on("datavalidated", function() {
+        polygonSeries.mapPolygons.each(function(polygon) {
+          const nomeCidade = polygon.dataItem.dataContext.name;
+          const nomeNormalizado = normalizar(nomeCidade);
+          let regiaoEncontrada = null;
+
+          for (const regiao in regioesMunicipios) {
+            const listaNormalizada = regioesMunicipios[regiao].map(c => normalizar(c));
+            if (listaNormalizada.includes(nomeNormalizado)) {
+              regiaoEncontrada = regiao;
+              break;
+            }
+          }
+
+          const cor = regiaoEncontrada && coresPorRegiao[regiaoEncontrada]
+            ? coresPorRegiao[regiaoEncontrada]
+            : "#C8E6C9";
+          polygon.set("fill", am5.color(cor));
+        });
+      });
+
+      // ✨ Efeito hover
       polygonSeries.mapPolygons.template.states.create("hover", {
-        fill: am5.color(0x43a047)
+        fill: am5.color(0x43a047),
+        scale: 1.05,
+        shadowColor: am5.color(0x000000),
+        shadowBlur: 6
       });
 
-      // Evento de clique em cada município
+      // 🖱️ Clique envia nome da cidade para o Odoo
       polygonSeries.mapPolygons.template.events.on("click", function(ev) {
         const nomeCidade = ev.target.dataItem.dataContext.name;
-
-        // Envia o nome da cidade para o Odoo (pai do iframe)
         window.parent.postMessage({ city: nomeCidade }, "*");
-
-        // Opcional: para debug
         console.log("Cidade enviada:", nomeCidade);
       });
 
@@ -90,4 +148,3 @@ am5.ready(function() {
 
 </body>
 </html>
-
