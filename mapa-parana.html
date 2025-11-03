@@ -114,25 +114,31 @@ am5.ready(async function() {
     strokeWidth:0.2
   });
 
-  // aplica cores
-  polygonSeries.events.on("datavalidated",function(){
-    polygonSeries.mapPolygons.each(function(polygon){
-      const nomeCidade=polygon.dataItem.dataContext.name;
-      const nomeNormalizado=normalizar(nomeCidade);
-      let regiaoEncontrada=null;
+ polygonSeries.events.on("datavalidated", function() {
+  polygonSeries.mapPolygons.each(function(polygon) {
+    const nomeCidade = polygon.dataItem.dataContext.name;
+    const nomeNormalizado = normalizar(nomeCidade);
+    let regiaoEncontrada = null;
 
-      for(const regiao in regioesMunicipios){
-        const lista=regioesMunicipios[regiao].map(c=>normalizar(c));
-        if(lista.includes(nomeNormalizado)){
-          regiaoEncontrada=regiao; break;
-        }
+    for (const regiao in regioesMunicipios) {
+      const lista = regioesMunicipios[regiao].map(c => normalizar(c));
+      if (lista.includes(nomeNormalizado)) {
+        regiaoEncontrada = regiao;
+        break;
       }
+    }
 
-      const cor=regiaoEncontrada&&coresPorRegiao[regiaoEncontrada]
-        ? coresPorRegiao[regiaoEncontrada] : "#C8E6C9";
-      polygon.set("fill",am5.color(cor));
-    });
+    if (!regiaoEncontrada) {
+      console.warn("🚫 Município sem correspondência no JSON:", nomeCidade);
+    }
+
+    const cor = regiaoEncontrada && coresPorRegiao[regiaoEncontrada]
+      ? coresPorRegiao[regiaoEncontrada]
+      : "#C8E6C9";
+    polygon.set("fill", am5.color(cor));
   });
+});
+
 
   // clique envia ao Odoo
   polygonSeries.mapPolygons.template.events.on("click",function(ev){
@@ -147,3 +153,4 @@ am5.ready(async function() {
 
 </body>
 </html>
+
