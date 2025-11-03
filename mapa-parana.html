@@ -80,5 +80,15 @@ am5.ready(function() {
   chart.appear(1000, 100);
 });
 </script>
+  <script>
+document.querySelectorAll('.municipio').forEach(el => {
+  el.addEventListener('click', () => {
+    const city = el.getAttribute('data-nome');
+    window.parent.postMessage({ city: city }, "*");
+  });
+});
+</script>
+
 </body>
 </html>
+
