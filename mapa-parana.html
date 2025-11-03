@@ -1,12 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Mapa Interativo do Paraná — Regiões Coloridas</title>
+
+<!-- Bibliotecas amCharts -->
+<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
+<style>
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background: #f0f8f5;
+    font-family: 'Poppins', Arial, sans-serif;
+  }
+  #mapa-parana {
+    width: 100%;
+    height: 100vh;
+  }
+  .am5-tooltip {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  /* Legenda */
+  #legenda {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.2);
+    padding: 10px 15px;
+    font-family: Poppins, Arial, sans-serif;
+  }
+  #legenda h4 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: #2e7d32;
+  }
+  #legenda .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 10px;
+    font-size: 14px;
+  }
+  #legenda .item span {
+    display:inline-block;
+    width:15px;
+    height:15px;
+    margin-right:5px;
+    border-radius:3px;
+  }
+</style>
+</head>
+
+<body>
+<div id="mapa-parana"></div>
+
+<!-- 🌈 Legenda colorida -->
+<div id="legenda">
+  <h4>🗺️ Regiões do Paraná</h4>
+  <div class="grid">
+    <div class="item"><span style="background:#FFD54F"></span>Noroeste</div>
+    <div class="item"><span style="background:#4CAF50"></span>Norte Central</div>
+    <div class="item"><span style="background:#81C784"></span>Norte Pioneiro</div>
+    <div class="item"><span style="background:#FBC02D"></span>Centro Ocidental</div>
+    <div class="item"><span style="background:#388E3C"></span>Centro Oriental</div>
+    <div class="item"><span style="background:#2196F3"></span>Oeste</div>
+    <div class="item"><span style="background:#1976D2"></span>Sudoeste</div>
+    <div class="item"><span style="background:#8E24AA"></span>Centro-Sul</div>
+    <div class="item"><span style="background:#5E35B1"></span>Sudeste</div>
+    <div class="item"><span style="background:#E53935"></span>Metropolitana</div>
+  </div>
+</div>
+
 <script>
 am5.ready(async function() {
+  // 🌎 Inicializa o mapa
   const root = am5.Root.new("mapa-parana");
   root.setThemes([am5themes_Animated.new(root)]);
-  const chart = root.container.children.push(am5map.MapChart.new(root,{
+  const chart = root.container.children.push(am5map.MapChart.new(root, {
     projection: am5map.geoMercator(),
-    panX:"translateX", panY:"translateY", wheelY:"zoom"
+    panX: "translateX",
+    panY: "translateY",
+    wheelY: "zoom"
   }));
 
+  // 🎨 Paleta de cores
   const coresPorRegiao = {
     "Noroeste Paranaense": "#FFD54F",
     "Norte Central Paranaense": "#4CAF50",
@@ -20,55 +103,73 @@ am5.ready(async function() {
     "Metropolitana de Curitiba": "#E53935"
   };
 
-  // ✅ GeoJSON confiável
+  // ✅ Carrega GeoJSON (mapa dos municípios)
   const geoUrl = "https://rawcdn.githack.com/tbrugz/geodata-br/master/geojson/geojs-41-mun.json";
   const geoData = await fetch(geoUrl).then(r => r.json());
 
-  // ✅ Arquivo de regiões (verifique o link)
+  // ✅ Carrega arquivo das regiões
   let regioesMunicipios = {};
- try {
-  const regioesResp = await fetch("https://raw.githubusercontent.com/gustavosampaio-dev/pvgustavosampaio.github.io/main/regioes-pr.json");
-  regioesMunicipios = await regioesResp.json();
-  console.log("✅ Regiões carregadas com sucesso:", Object.keys(regioesMunicipios));
-} catch (e) {
-  console.warn("⚠️ Arquivo regioes-pr.json não encontrado ou inválido", e);
-}
+  try {
+    const regioesResp = await fetch("https://raw.githubusercontent.com/gustavosampaio-dev/pvgustavosampaio.github.io/main/regioes-pr.json");
+    regioesMunicipios = await regioesResp.json();
+    console.log("✅ Regiões carregadas com sucesso:", Object.keys(regioesMunicipios));
+  } catch (e) {
+    console.warn("⚠️ Arquivo regioes-pr.json não encontrado ou inválido", e);
+  }
 
-  const polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root,{geoJSON:geoData}));
+  // 🗺️ Desenha os municípios
+  const polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root, { geoJSON: geoData }));
 
   polygonSeries.mapPolygons.template.setAll({
-    tooltipText:"{name}",
-    interactive:true,
-    stroke:am5.color(0xffffff),
-    strokeWidth:0.25,
-    cursorOverStyle:"pointer"
+    tooltipText: "{name}",
+    interactive: true,
+    stroke: am5.color(0xffffff),
+    strokeWidth: 0.25,
+    cursorOverStyle: "pointer"
   });
 
-  polygonSeries.events.on("datavalidated",function(){
-    polygonSeries.mapPolygons.each(function(polygon){
-      const nomeCidade=polygon.dataItem.dataContext.name;
-      const regiao=regioesMunicipios[nomeCidade];
-      const cor=regiao && coresPorRegiao[regiao]?coresPorRegiao[regiao]:"#C8E6C9";
-      polygon.set("fill",am5.color(cor));
+  // 🧠 Aplica cores conforme sub-região
+  polygonSeries.events.on("datavalidated", function() {
+    polygonSeries.mapPolygons.each(function(polygon) {
+      const nomeCidade = polygon.dataItem.dataContext.name;
+      let regiaoEncontrada = null;
+
+      for (const regiao in regioesMunicipios) {
+        if (regioesMunicipios[regiao].includes(nomeCidade)) {
+          regiaoEncontrada = regiao;
+          break;
+        }
+      }
+
+      const cor = regiaoEncontrada && coresPorRegiao[regiaoEncontrada]
+        ? coresPorRegiao[regiaoEncontrada]
+        : "#C8E6C9";
+
+      polygon.set("fill", am5.color(cor));
+
+      if (!regiaoEncontrada)
+        console.warn("Cidade sem região definida:", nomeCidade);
     });
   });
 
-  polygonSeries.mapPolygons.template.states.create("hover",{
-    fill:am5.color(0x43a047),
-    scale:1.05,
-    shadowColor:am5.color(0x000000),
-    shadowBlur:6
+  // ✨ Efeito de hover
+  polygonSeries.mapPolygons.template.states.create("hover", {
+    fill: am5.color(0x43a047),
+    scale: 1.05,
+    shadowColor: am5.color(0x000000),
+    shadowBlur: 6
   });
 
-  polygonSeries.mapPolygons.template.events.on("click",function(ev){
-    const nomeCidade=ev.target.dataItem.dataContext.name;
-    window.parent.postMessage({city:nomeCidade},"*");
-    console.log("Cidade enviada:",nomeCidade);
+  // 🖱️ Clique envia nome da cidade
+  polygonSeries.mapPolygons.template.events.on("click", function(ev) {
+    const nomeCidade = ev.target.dataItem.dataContext.name;
+    window.parent.postMessage({ city: nomeCidade }, "*");
+    console.log("Cidade enviada:", nomeCidade);
   });
 
-  chart.appear(1000,100);
+  chart.appear(1000, 100);
 });
 </script>
 
-
-
+</body>
+</html>
