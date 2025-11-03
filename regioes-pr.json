@@ -1,0 +1,67 @@
+{
+  "Noroeste Paranaense": [
+    "Cidade Gaúcha", "Cianorte", "Diamante do Norte", "Guaporema", "Icaraíma", "Indianópolis",
+    "Loanda", "Maria Helena", "Marilena", "Maringá", "Nova Londrina", "Paraíso do Norte",
+    "Paranacity", "Paranapoema", "Paranavaí", "Planaltina do Paraná", "Santa Isabel do Ivaí",
+    "Santa Mônica", "São Carlos do Ivaí", "São João do Caiuá", "São Jorge do Ivaí", "Tamboara",
+    "Terra Rica", "Tuneiras do Oeste", "Umuarama"
+  ],
+
+  "Norte Central Paranaense": [
+    "Arapongas", "Astorga", "Apucarana", "Bela Vista do Paraíso", "Cambé", "Centenário do Sul",
+    "Florestópolis", "Guaraci", "Ibiporã", "Itaguajé", "Ivatuba", "Londrina", "Mandaguari",
+    "Marialva", "Munhoz de Melo", "Miraselva", "Nossa Senhora das Graças", "Pitangueiras",
+    "Presidente Castelo Branco", "Rolândia", "Sabáudia", "Santa Fé", "Santa Inês", "Santa Cecília do Pavão",
+    "Sertanópolis", "Tamarana"
+  ],
+
+  "Norte Pioneiro Paranaense": [
+    "Abatiá", "Andirá", "Assaí", "Bandeirantes", "Cambará", "Cornélio Procópio", "Ibaiti",
+    "Jacarezinho", "Joaquim Távora", "Ribeirão Claro", "Santa Mariana", "Santana do Itararé",
+    "Santo Antônio da Platina", "São José da Boa Vista", "Tomazina", "Wenceslau Braz"
+  ],
+
+  "Centro Ocidental Paranaense": [
+    "Altamira do Paraná", "Campina da Lagoa", "Campo Mourão", "Engenheiro Beltrão", "Farol",
+    "Iretama", "Janiópolis", "Juranda", "Luiziana", "Mamborê", "Moreira Sales", "Nova Cantu",
+    "Peabiru", "Quarto Centenário", "Roncador", "Terra Boa", "Ubiratã"
+  ],
+
+  "Centro Oriental Paranaense": [
+    "Arapoti", "Carambeí", "Castro", "Imbaú", "Ortigueira", "Piraí do Sul", "Ponta Grossa",
+    "Sengés", "Telêmaco Borba", "Ventania"
+  ],
+
+  "Oeste Paranaense": [
+    "Assis Chateaubriand", "Cafelândia", "Cascavel", "Diamante do Sul", "Entre Rios do Oeste",
+    "Formosa do Oeste", "Foz do Iguaçu", "Guaíra", "Iguatu", "Itaipulândia", "Marechal Cândido Rondon",
+    "Medianeira", "Mercedes", "Nova Aurora", "Palotina", "Pato Bragado", "Santa Helena",
+    "Santa Tereza do Oeste", "São José das Palmeiras", "Toledo", "Três Barras do Paraná", "Vera Cruz do Oeste"
+  ],
+
+  "Sudoeste Paranaense": [
+    "Ampére", "Barracão", "Bela Vista da Caroba", "Boa Esperança do Iguaçu", "Bom Jesus do Sul",
+    "Capanema", "Chopinzinho", "Coronel Vivida", "Dois Vizinhos", "Enéas Marques", "Flor da Serra do Sul",
+    "Francisco Beltrão", "Honório Serpa", "Manfrinópolis", "Marmeleiro", "Nova Esperança do Sudoeste",
+    "Pato Branco", "Pinhal de São Bento", "Planalto", "Pranchita", "Renascença", "Realeza", "Salgado Filho",
+    "Santo Antônio do Sudoeste", "Saudade do Iguaçu", "Verê"
+  ],
+
+  "Centro-Sul Paranaense": [
+    "Bituruna", "Candói", "Cantagalo", "Espigão Alto do Iguaçu", "Goioxim", "Guarapuava",
+    "Inácio Martins", "Irati", "Laranjeiras do Sul", "Mallet", "Palmital", "Pinhão",
+    "Pitanga", "Prudentópolis", "Reserva do Iguaçu", "Rio Bonito do Iguaçu", "Turvo", "Virmond"
+  ],
+
+  "Sudeste Paranaense": [
+    "Antônio Olinto", "Cruz Machado", "General Carneiro", "Mallet", "Paulo Frontin",
+    "Porto Vitória", "São João do Triunfo", "São Mateus do Sul", "União da Vitória"
+  ],
+
+  "Metropolitana de Curitiba": [
+    "Adrianópolis", "Agudos do Sul", "Almirante Tamandaré", "Araucária", "Balsa Nova", "Bocaiúva do Sul",
+    "Campina Grande do Sul", "Campo Largo", "Campo Magro", "Cerro Azul", "Colombo", "Contenda",
+    "Curitiba", "Fazenda Rio Grande", "Itaperuçu", "Lapa", "Mandirituba", "Morretes", "Piên",
+    "Pinhais", "Piraquara", "Quatro Barras", "Rio Branco do Sul", "São José dos Pinhais", "Tunas do Paraná"
+  ]
+}
