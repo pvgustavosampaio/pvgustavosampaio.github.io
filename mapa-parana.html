@@ -4,17 +4,51 @@
 <meta charset="UTF-8">
 <title>Mapa Interativo do Paraná — Regiões Coloridas</title>
 
-<!-- Bibliotecas amCharts -->
+<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
+<style>
+  html,body{width:100%;height:100%;margin:0;background:#f0f8f5;font-family:'Poppins',Arial,sans-serif}
+  #mapa-parana{width:100%;height:100vh}
+  .am5-tooltip{font-size:14px;font-weight:600}
+  #legenda{position:absolute;bottom:15px;right:15px;background:#fff;border-radius:8px;
+    box-shadow:0 0 8px rgba(0,0,0,0.2);padding:10px 15px;font-family:Poppins,Arial,sans-serif}
+  #legenda h4{margin:0 0 10px 0;font-size:16px;color:#2e7d32}
+  #legenda .grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:14px}
+  #legenda .item span{display:inline-block;width:15px;height:15px;margin-right:5px;border-radius:3px}
+</style>
+</head>
+
+<body>
+<div id="mapa-parana"></div>
+<div id="legenda">
+  <h4>🗺️ Regiões do Paraná</h4>
+  <div class="grid">
+    <div class="item"><span style="background:#FFD54F"></span>Noroeste</div>
+    <div class="item"><span style="background:#4CAF50"></span>Norte Central</div>
+    <div class="item"><span style="background:#81C784"></span>Norte Pioneiro</div>
+    <div class="item"><span style="background:#FBC02D"></span>Centro Ocidental</div>
+    <div class="item"><span style="background:#388E3C"></span>Centro Oriental</div>
+    <div class="item"><span style="background:#2196F3"></span>Oeste</div>
+    <div class="item"><span style="background:#1976D2"></span>Sudoeste</div>
+    <div class="item"><span style="background:#8E24AA"></span>Centro-Sul</div>
+    <div class="item"><span style="background:#5E35B1"></span>Sudeste</div>
+    <div class="item"><span style="background:#E53935"></span>Metropolitana</div>
+  </div>
+</div>
+
 <script>
 am5.ready(async function() {
   const root = am5.Root.new("mapa-parana");
   root.setThemes([am5themes_Animated.new(root)]);
+
   const chart = root.container.children.push(am5map.MapChart.new(root,{
     projection: am5map.geoMercator(),
-    panX:"translateX", panY:"translateY", wheelY:"zoom"
+    panX:"translateX",panY:"translateY",wheelY:"zoom"
   }));
 
-  const coresPorRegiao = {
+  const coresPorRegiao={
     "Noroeste Paranaense":"#FFD54F",
     "Norte Central Paranaense":"#4CAF50",
     "Norte Pioneiro Paranaense":"#81C784",
@@ -27,74 +61,53 @@ am5.ready(async function() {
     "Metropolitana de Curitiba":"#E53935"
   };
 
-  // GeoJSON do Paraná
-  const geoUrl = "https://pvgustavosampaio.github.io/geojs-41-mun.json";
-  const geoData = await fetch(geoUrl).then(r => r.json());
+  // 🔗 GeoJSON com as fronteiras
+  const geoUrl="https://pvgustavosampaio.github.io/geojs-41-mun.json";
+  const geoData=await fetch(geoUrl).then(r=>r.json());
 
-  // Arquivo de Regiões
-  const regioesResp = await fetch("https://pvgustavosampaio.github.io/regioes-pr.json");
-  const regioesMunicipios = await regioesResp.json();
+  // 🔗 Arquivo de regiões
+  const regioesResp=await fetch("https://pvgustavosampaio.github.io/regioes-pr.json");
+  const regioesMunicipios=await regioesResp.json();
 
-  // Função para normalizar (remove acentos, apóstrofos, etc.)
-  const normalizar = (str) =>
-    str
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/['’`´]/g, "")
-      .replace(/-/g, " ")
-      .toLowerCase()
-      .trim();
+  // 🔤 Função de normalização (remove acentos e diferenças)
+  function normalizar(str){
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .replace(/['’`´]/g,"").replace(/-/g," ").toLowerCase().trim();
+  }
 
-  // Série de polígonos
-  const polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root,{geoJSON:geoData}));
-
+  const polygonSeries=chart.series.push(am5map.MapPolygonSeries.new(root,{geoJSON:geoData}));
   polygonSeries.mapPolygons.template.setAll({
-    tooltipText:"{name}",
-    interactive:true,
-    stroke:am5.color(0xffffff),
-    strokeWidth:0.25,
-    cursorOverStyle:"pointer"
+    tooltipText:"{name}",interactive:true,stroke:am5.color(0xffffff),
+    strokeWidth:0.25,cursorOverStyle:"pointer"
   });
 
-  polygonSeries.events.on("datavalidated", function(){
+  // 🎨 Colore conforme sub-região
+  polygonSeries.events.on("datavalidated",function(){
     polygonSeries.mapPolygons.each(function(polygon){
-      const nomeCidade = polygon.dataItem.dataContext.name;
-      const nomeNormalizado = normalizar(nomeCidade);
-      let regiaoEncontrada = null;
-
-      for (const regiao in regioesMunicipios) {
-        const listaNormalizada = regioesMunicipios[regiao].map(c=>normalizar(c));
-        if (listaNormalizada.includes(nomeNormalizado)) {
-          regiaoEncontrada = regiao;
-          break;
-        }
+      const nomeCidade=polygon.dataItem.dataContext.name;
+      const nomeNormalizado=normalizar(nomeCidade);
+      let regiaoEncontrada=null;
+      for(const regiao in regioesMunicipios){
+        const lista=regioesMunicipios[regiao].map(c=>normalizar(c));
+        if(lista.includes(nomeNormalizado)){regiaoEncontrada=regiao;break;}
       }
-
-      const cor = regiaoEncontrada && coresPorRegiao[regiaoEncontrada]
-        ? coresPorRegiao[regiaoEncontrada]
-        : "#C8E6C9";
-
-      polygon.set("fill", am5.color(cor));
+      const cor=regiaoEncontrada&&coresPorRegiao[regiaoEncontrada]?coresPorRegiao[regiaoEncontrada]:"#C8E6C9";
+      polygon.set("fill",am5.color(cor));
     });
   });
 
   polygonSeries.mapPolygons.template.states.create("hover",{
-    fill:am5.color(0x43a047),
-    scale:1.05,
-    shadowColor:am5.color(0x000000),
-    shadowBlur:6
+    fill:am5.color(0x43a047),scale:1.05,shadowColor:am5.color(0x000000),shadowBlur:6
   });
 
   polygonSeries.mapPolygons.template.events.on("click",function(ev){
     const nomeCidade=ev.target.dataItem.dataContext.name;
     window.parent.postMessage({city:nomeCidade},"*");
-    console.log("🟢 Clique:", nomeCidade);
+    console.log("🟢 Clique:",nomeCidade);
   });
 
   chart.appear(1000,100);
 });
 </script>
-
 </body>
 </html>
-
