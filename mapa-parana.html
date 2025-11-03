@@ -17,15 +17,18 @@
     background: #f0f8f5;
     font-family: 'Poppins', Arial, sans-serif;
   }
+
   #mapa-parana {
     width: 100%;
     height: 100vh;
   }
+
   .am5-tooltip {
     font-size: 14px;
     font-weight: 600;
   }
-  /* Legenda */
+
+  /* 🌈 Legenda */
   #legenda {
     position: absolute;
     bottom: 15px;
@@ -79,9 +82,11 @@
 
 <script>
 am5.ready(async function() {
+
   // 🌎 Inicializa o mapa
   const root = am5.Root.new("mapa-parana");
   root.setThemes([am5themes_Animated.new(root)]);
+
   const chart = root.container.children.push(am5map.MapChart.new(root, {
     projection: am5map.geoMercator(),
     panX: "translateX",
@@ -89,7 +94,7 @@ am5.ready(async function() {
     wheelY: "zoom"
   }));
 
-  // 🎨 Paleta de cores
+  // 🎨 Paleta de cores por sub-região IBGE
   const coresPorRegiao = {
     "Noroeste Paranaense": "#FFD54F",
     "Norte Central Paranaense": "#4CAF50",
@@ -103,18 +108,26 @@ am5.ready(async function() {
     "Metropolitana de Curitiba": "#E53935"
   };
 
-  // ✅ Carrega GeoJSON (mapa dos municípios)
- const regioesResp = await fetch("https://pvgustavosampaio.github.io/regioes-pr.json");
-  const geoData = await fetch(geoUrl).then(r => r.json());
+  // ✅ GeoJSON confiável (baixado diretamente do IBGE via mirror)
+  const geoUrl = "https://pvgustavosampaio.github.io/geojs-41-mun.json";
+  let geoData;
+  try {
+    const resp = await fetch(geoUrl);
+    geoData = await resp.json();
+    console.log("✅ GeoJSON carregado:", geoData.features.length, "municípios");
+  } catch (e) {
+    console.error("❌ Erro ao carregar GeoJSON:", e);
+    return;
+  }
 
-  // ✅ Carrega arquivo das regiões
+  // ✅ Regiões (link confirmado)
   let regioesMunicipios = {};
   try {
-    const regioesResp = await fetch("https://raw.githubusercontent.com/gustavosampaio-dev/pvgustavosampaio.github.io/main/regioes-pr.json");
+    const regioesResp = await fetch("https://pvgustavosampaio.github.io/regioes-pr.json");
     regioesMunicipios = await regioesResp.json();
-    console.log("✅ Regiões carregadas com sucesso:", Object.keys(regioesMunicipios));
+    console.log("✅ Regiões carregadas:", Object.keys(regioesMunicipios));
   } catch (e) {
-    console.warn("⚠️ Arquivo regioes-pr.json não encontrado ou inválido", e);
+    console.warn("⚠️ Erro ao carregar regioes-pr.json:", e);
   }
 
   // 🗺️ Desenha os municípios
@@ -128,7 +141,7 @@ am5.ready(async function() {
     cursorOverStyle: "pointer"
   });
 
-  // 🧠 Aplica cores conforme sub-região
+  // 🎨 Aplica as cores por região
   polygonSeries.events.on("datavalidated", function() {
     polygonSeries.mapPolygons.each(function(polygon) {
       const nomeCidade = polygon.dataItem.dataContext.name;
@@ -147,12 +160,11 @@ am5.ready(async function() {
 
       polygon.set("fill", am5.color(cor));
 
-      if (!regiaoEncontrada)
-        console.warn("Cidade sem região definida:", nomeCidade);
+      if (!regiaoEncontrada) console.warn("Cidade sem região:", nomeCidade);
     });
   });
 
-  // ✨ Efeito de hover
+  // ✨ Efeito hover
   polygonSeries.mapPolygons.template.states.create("hover", {
     fill: am5.color(0x43a047),
     scale: 1.05,
@@ -160,11 +172,11 @@ am5.ready(async function() {
     shadowBlur: 6
   });
 
-  // 🖱️ Clique envia nome da cidade
+  // 🖱️ Clique envia cidade para o Odoo
   polygonSeries.mapPolygons.template.events.on("click", function(ev) {
     const nomeCidade = ev.target.dataItem.dataContext.name;
     window.parent.postMessage({ city: nomeCidade }, "*");
-    console.log("Cidade enviada:", nomeCidade);
+    console.log("🟢 Clique:", nomeCidade);
   });
 
   chart.appear(1000, 100);
