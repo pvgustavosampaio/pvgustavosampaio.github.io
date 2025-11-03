@@ -2,31 +2,16 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Mapa Interativo do Paraná</title>
+<title>Mapa Interativo do Paraná — Regiões Coloridas</title>
 
-<!-- Bibliotecas amCharts -->
 <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
-<script src="https://cdn.amcharts.com/lib/5/geodata/brazilLow.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
 
 <style>
-  html, body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    background: #f0f8f5;
-    font-family: Arial, sans-serif;
-  }
-
-  #mapa-parana {
-    width: 100%;
-    height: 100vh;
-  }
-
-  .am5-tooltip {
-    font-size: 13px;
-  }
+  html,body{width:100%;height:100%;margin:0;background:#f0f8f5;font-family:'Poppins',Arial,sans-serif}
+  #mapa-parana{width:100%;height:100vh}
+  .am5-tooltip{font-size:14px;font-weight:600}
 </style>
 </head>
 
@@ -34,59 +19,66 @@
 <div id="mapa-parana"></div>
 
 <script>
-am5.ready(function() {
-
-  // Inicializa o mapa
-  var root = am5.Root.new("mapa-parana");
+am5.ready(async function() {
+  const root = am5.Root.new("mapa-parana");
   root.setThemes([am5themes_Animated.new(root)]);
 
-  var chart = root.container.children.push(am5map.MapChart.new(root, {
+  const chart = root.container.children.push(am5map.MapChart.new(root,{
     projection: am5map.geoMercator(),
-    panX: "translateX",
-    panY: "translateY",
-    wheelY: "zoom"
+    panX:"translateX",panY:"translateY",wheelY:"zoom"
   }));
 
-  // Carrega GeoJSON com os municípios do Paraná (IBGE)
-  var geoUrl = "https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-41-mun.json";
+  const coresPorRegiao={
+    "Noroeste Paranaense":"#FFD54F",
+    "Norte Central Paranaense":"#4CAF50",
+    "Norte Pioneiro Paranaense":"#81C784",
+    "Centro Ocidental Paranaense":"#FBC02D",
+    "Centro Oriental Paranaense":"#388E3C",
+    "Oeste Paranaense":"#2196F3",
+    "Sudoeste Paranaense":"#1976D2",
+    "Centro-Sul Paranaense":"#8E24AA",
+    "Sudeste Paranaense":"#5E35B1",
+    "Metropolitana de Curitiba":"#E53935"
+  };
 
-  fetch(geoUrl)
-    .then(response => response.json())
-    .then(data => {
+  // API IBGE - lista todos os 399 municípios do PR
+  const municipiosResp = await fetch("https://servicodados.ibge.gov.br/api/v1/localidades/estados/41/municipios");
+  const municipios = await municipiosResp.json();
 
-      var polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root, {
-        geoJSON: data
-      }));
+  // JSON externo com a região de cada município
+  const regioesResp = await fetch("https://raw.githubusercontent.com/gustavosampaio-dev/dados-parana/main/regioes-pr.json");
+  const regioesMunicipios = await regioesResp.json();
 
-      polygonSeries.mapPolygons.template.setAll({
-        tooltipText: "{name}",
-        interactive: true,
-        fill: am5.color(0xa5d6a7),
-        stroke: am5.color(0x33691e),
-        strokeWidth: 0.2
-      });
+  const geoUrl="https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-41-mun.json";
+  const geoData=await fetch(geoUrl).then(r=>r.json());
 
-      polygonSeries.mapPolygons.template.states.create("hover", {
-        fill: am5.color(0x43a047)
-      });
+  const polygonSeries=chart.series.push(am5map.MapPolygonSeries.new(root,{geoJSON:geoData}));
+  polygonSeries.mapPolygons.template.setAll({
+    tooltipText:"{name}",interactive:true,
+    stroke:am5.color(0xffffff),strokeWidth:0.25,cursorOverStyle:"pointer"
+  });
 
-      // Evento de clique em cada município
-      polygonSeries.mapPolygons.template.events.on("click", function(ev) {
-        const nomeCidade = ev.target.dataItem.dataContext.name;
+  polygonSeries.events.on("datavalidated",function(){
+    polygonSeries.mapPolygons.each(function(polygon){
+      const nomeCidade=polygon.dataItem.dataContext.name;
+      const regiao=regioesMunicipios[nomeCidade];
+      const cor=regiao && coresPorRegiao[regiao]?coresPorRegiao[regiao]:"#C8E6C9";
+      polygon.set("fill",am5.color(cor));
+    });
+  });
 
-        // Envia o nome da cidade para o Odoo (pai do iframe)
-        window.parent.postMessage({ city: nomeCidade }, "*");
+  polygonSeries.mapPolygons.template.states.create("hover",{
+    fill:am5.color(0x43a047),scale:1.05,shadowColor:am5.color(0x000000),shadowBlur:6
+  });
 
-        // Opcional: para debug
-        console.log("Cidade enviada:", nomeCidade);
-      });
+  polygonSeries.mapPolygons.template.events.on("click",function(ev){
+    const nomeCidade=ev.target.dataItem.dataContext.name;
+    window.parent.postMessage({city:nomeCidade},"*");
+    console.log("Cidade enviada:",nomeCidade);
+  });
 
-    })
-    .catch(err => console.error("Erro ao carregar mapa:", err));
-
-  chart.appear(1000, 100);
+  chart.appear(1000,100);
 });
 </script>
-
 </body>
 </html>
