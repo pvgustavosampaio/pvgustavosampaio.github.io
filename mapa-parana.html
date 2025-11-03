@@ -7,6 +7,7 @@
 <!-- Bibliotecas amCharts -->
 <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/geodata/brazilLow.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
 
 <style>
@@ -35,7 +36,7 @@
 <script>
 am5.ready(function() {
 
-  // Cria o mapa
+  // Inicializa o mapa
   var root = am5.Root.new("mapa-parana");
   root.setThemes([am5themes_Animated.new(root)]);
 
@@ -46,7 +47,7 @@ am5.ready(function() {
     wheelY: "zoom"
   }));
 
-  // URL GeoJSON IBGE (Paraná completo)
+  // Carrega GeoJSON com os municípios do Paraná (IBGE)
   var geoUrl = "https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-41-mun.json";
 
   fetch(geoUrl)
@@ -69,9 +70,15 @@ am5.ready(function() {
         fill: am5.color(0x43a047)
       });
 
+      // Evento de clique em cada município
       polygonSeries.mapPolygons.template.events.on("click", function(ev) {
-        const nome = ev.target.dataItem.dataContext.name;
-        alert("Você clicou em " + nome);
+        const nomeCidade = ev.target.dataItem.dataContext.name;
+
+        // Envia o nome da cidade para o Odoo (pai do iframe)
+        window.parent.postMessage({ city: nomeCidade }, "*");
+
+        // Opcional: para debug
+        console.log("Cidade enviada:", nomeCidade);
       });
 
     })
@@ -80,15 +87,6 @@ am5.ready(function() {
   chart.appear(1000, 100);
 });
 </script>
-  <script>
-document.querySelectorAll('.municipio').forEach(el => {
-  el.addEventListener('click', () => {
-    const city = el.getAttribute('data-nome');
-    window.parent.postMessage({ city: city }, "*");
-  });
-});
-</script>
 
 </body>
 </html>
-
