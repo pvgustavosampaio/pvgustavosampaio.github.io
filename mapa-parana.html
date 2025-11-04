@@ -2,11 +2,12 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Mapa Interativo do Paraná — IBGE Oficial</title>
+<title>Mapa Interativo do Paraná</title>
 
-<!-- amCharts 5 -->
+<!-- Bibliotecas amCharts -->
 <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/geodata/brazilLow.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
 
 <style>
@@ -26,128 +27,64 @@
   .am5-tooltip {
     font-size: 13px;
   }
-
-  #legenda {
-    position: absolute;
-    bottom: 15px;
-    right: 15px;
-    background: #fff;
-    border-radius: 6px;
-    box-shadow: 0 0 6px rgba(0,0,0,0.15);
-    padding: 8px 12px;
-    font-size: 13px;
-  }
-  #legenda .linha {margin: 2px 0;}
-  #legenda span {
-    display:inline-block;
-    width:12px;
-    height:12px;
-    margin-right:5px;
-    border-radius:2px;
-  }
 </style>
 </head>
 
 <body>
 <div id="mapa-parana"></div>
 
-<div id="legenda">
-  <div><strong>🗺️ Regiões IBGE</strong></div>
-  <div class="linha"><span style="background:#FFD54F"></span>Noroeste</div>
-  <div class="linha"><span style="background:#4CAF50"></span>Norte Central</div>
-  <div class="linha"><span style="background:#81C784"></span>Norte Pioneiro</div>
-  <div class="linha"><span style="background:#FBC02D"></span>Centro Ocidental</div>
-  <div class="linha"><span style="background:#388E3C"></span>Centro Oriental</div>
-  <div class="linha"><span style="background:#2196F3"></span>Oeste</div>
-  <div class="linha"><span style="background:#1976D2"></span>Sudoeste</div>
-  <div class="linha"><span style="background:#8E24AA"></span>Centro-Sul</div>
-  <div class="linha"><span style="background:#5E35B1"></span>Sudeste</div>
-  <div class="linha"><span style="background:#E53935"></span>Metropolitana</div>
-</div>
-
 <script>
-am5.ready(async function() {
-  // inicia
-  const root = am5.Root.new("mapa-parana");
+am5.ready(function() {
+
+  // Inicializa o mapa
+  var root = am5.Root.new("mapa-parana");
   root.setThemes([am5themes_Animated.new(root)]);
-  const chart = root.container.children.push(am5map.MapChart.new(root,{
+
+  var chart = root.container.children.push(am5map.MapChart.new(root, {
     projection: am5map.geoMercator(),
-    panX:"translateX",
-    panY:"translateY",
-    wheelY:"zoom"
+    panX: "translateX",
+    panY: "translateY",
+    wheelY: "zoom"
   }));
 
-  // cores
-  const coresPorRegiao={
-    "Noroeste Paranaense":"#FFD54F",
-    "Norte Central Paranaense":"#4CAF50",
-    "Norte Pioneiro Paranaense":"#81C784",
-    "Centro Ocidental Paranaense":"#FBC02D",
-    "Centro Oriental Paranaense":"#388E3C",
-    "Oeste Paranaense":"#2196F3",
-    "Sudoeste Paranaense":"#1976D2",
-    "Centro-Sul Paranaense":"#8E24AA",
-    "Sudeste Paranaense":"#5E35B1",
-    "Metropolitana de Curitiba":"#E53935"
-  };
+  // Carrega GeoJSON com os municípios do Paraná (IBGE)
+  var geoUrl = "https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-41-mun.json";
 
-  // normalizador
-  function normalizar(str){
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-      .replace(/['’`´]/g,"").replace(/-/g," ")
-      .replace(/\s+/g," ").toLowerCase().trim();
-  }
+  fetch(geoUrl)
+    .then(response => response.json())
+    .then(data => {
 
-  // GeoJSON do Paraná (IBGE)
-  const geoUrl = "https://pvgustavosampaio.github.io/geojs-41-mun.json";
-  let geoData = await fetch(geoUrl).then(r=>r.json());
+      var polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root, {
+        geoJSON: data
+      }));
 
-  // Arquivo oficial de regiões (seu JSON)
-  const regioesResp = await fetch("https://pvgustavosampaio.github.io/regioes-pr.json");
-  const regioesMunicipios = await regioesResp.json();
+      polygonSeries.mapPolygons.template.setAll({
+        tooltipText: "{name}",
+        interactive: true,
+        fill: am5.color(0xa5d6a7),
+        stroke: am5.color(0x33691e),
+        strokeWidth: 0.2
+      });
 
-  const polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root,{geoJSON:geoData}));
-  polygonSeries.mapPolygons.template.setAll({
-    tooltipText:"{name}",
-    interactive:true,
-    stroke:am5.color(0xffffff),
-    strokeWidth:0.2
-  });
+      polygonSeries.mapPolygons.template.states.create("hover", {
+        fill: am5.color(0x43a047)
+      });
 
- polygonSeries.events.on("datavalidated", function() {
-  polygonSeries.mapPolygons.each(function(polygon) {
-    const nomeCidade = polygon.dataItem.dataContext.name;
-    const nomeNormalizado = normalizar(nomeCidade);
-    let regiaoEncontrada = null;
+      // Evento de clique em cada município
+      polygonSeries.mapPolygons.template.events.on("click", function(ev) {
+        const nomeCidade = ev.target.dataItem.dataContext.name;
 
-    for (const regiao in regioesMunicipios) {
-      const lista = regioesMunicipios[regiao].map(c => normalizar(c));
-      if (lista.includes(nomeNormalizado)) {
-        regiaoEncontrada = regiao;
-        break;
-      }
-    }
+        // Envia o nome da cidade para o Odoo (pai do iframe)
+        window.parent.postMessage({ city: nomeCidade }, "*");
 
-    if (!regiaoEncontrada) {
-      console.warn("🚫 Município sem correspondência no JSON:", nomeCidade);
-    }
+        // Opcional: para debug
+        console.log("Cidade enviada:", nomeCidade);
+      });
 
-    const cor = regiaoEncontrada && coresPorRegiao[regiaoEncontrada]
-      ? coresPorRegiao[regiaoEncontrada]
-      : "#C8E6C9";
-    polygon.set("fill", am5.color(cor));
-  });
-});
+    })
+    .catch(err => console.error("Erro ao carregar mapa:", err));
 
-
-  // clique envia ao Odoo
-  polygonSeries.mapPolygons.template.events.on("click",function(ev){
-    const nomeCidade=ev.target.dataItem.dataContext.name;
-    window.parent.postMessage({city:nomeCidade},"*");
-    console.log("Cidade enviada:",nomeCidade);
-  });
-
-  chart.appear(0,0);
+  chart.appear(1000, 100);
 });
 </script>
 
