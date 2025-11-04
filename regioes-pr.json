@@ -10,7 +10,7 @@
   "Santo Antônio do Caiuá", "São Carlos do Ivaí", "São João do Caiuá", "São Jorge do Patrocínio",
   "São Manoel do Paraná", "São Pedro do Paraná", "São Tomé", "Tamboara", "Tapejara", "Tapira", "Terra Rica",
   "Tuneiras do Oeste", "Umuarama", "Xambrê"
-]
+],
 "Norte Central Paranaense": [
   "Ângulo", "Arapongas", "Arapuã", "Astorga", "Apucarana", "Atalaia", "Bom Sucesso", "Cambé", "Centenário do Sul",
   "Colorado", "Florestópolis", "Guaraci", "Ibiporã", "Itaguajé", "Ivatuba", "Jandaia do Sul", "Jardim Alegre",
@@ -18,7 +18,7 @@
   "Nova Esperança", "Pitangueiras", "Presidente Castelo Branco", "Rolândia", "Sabáudia", "Santa Fé", "Santa Inês",
   "Santo Inácio", "São Pedro do Ivaí", "Sertanópolis", "Tamarana", "Faxinal", "Floraí", "Ivaiporã", "Kaloré",
   "Lidianópolis", "Marumbi", "Mauá da Serra", "Rio Bom", "São João do Ivaí"
-]
+],
 
   "Norte Pioneiro Paranaense": [
   "Abatiá", "Andirá", "Assaí", "Bandeirantes", "Barra do Jacaré", "Cambará", "Carlópolis", "Congonhinhas",
@@ -28,18 +28,18 @@
   "Santa Mariana", "Santana do Itararé", "Santo Antônio do Paraíso", "Santo Antônio da Platina", "São Jerônimo da Serra",
   "São João do Triunfo", "São José da Boa Vista", "São Sebastião da Amoreira", "Sapopema", "Sertaneja", "Siqueira Campos",
   "Tomazina", "Uraí", "Wenceslau Braz"
-]
+],
   "Centro Ocidental Paranaense": [
   "Altamira do Paraná", "Araruna", "Barbosa Ferraz", "Boa Esperança", "Campina da Lagoa", "Campo Mourão",
   "Corumbataí do Sul", "Engenheiro Beltrão", "Farol", "Fênix", "Goioerê", "Iretama", "Janiópolis", "Juranda",
   "Luiziana", "Mamborê", "Moreira Sales", "Nova Cantu", "Peabiru", "Quarto Centenário", "Roncador",
   "Terra Boa", "Ubiratã"
-]
+],
 
   "Centro Oriental Paranaense": [
   "Arapoti", "Carambeí", "Castro", "Curiúva", "Fernandes Pinheiro", "Imbaú", "Ivaí", "Ipiranga",
   "Ortigueira", "Piraí do Sul", "Ponta Grossa", "Reserva", "Sengés", "Telêmaco Borba", "Ventania"
-]
+],
 "Oeste Paranaense": [
   "Assis Chateaubriand", "Boa Vista da Aparecida", "Cafelândia", "Campo Bonito", "Cascavel", "Catanduvas",
   "Diamante do Sul", "Entre Rios do Oeste", "Formosa do Oeste", "Foz do Iguaçu", "Guaíra", "Iguatu",
@@ -48,7 +48,7 @@
   "Ramilândia", "Santa Helena", "Santa Lúcia", "Santa Tereza do Oeste", "São José das Palmeiras",
   "São Miguel do Iguaçu", "São Pedro do Iguaçu", "Serranópolis do Iguaçu", "Terra Roxa", "Toledo",
   "Três Barras do Paraná", "Vera Cruz do Oeste"
-]
+],
 
  "Sudoeste Paranaense": [
   "Ampére", "Barracão", "Bela Vista da Caroba", "Boa Esperança do Iguaçu", "Bom Jesus do Sul",
@@ -58,17 +58,17 @@
   "Pinhal de São Bento", "Planalto", "Pranchita", "Realeza", "Renascença", "Salgado Filho",
   "Santa Izabel do Oeste", "Santo Antônio do Sudoeste", "São Jorge d'Oeste", "Saudade do Iguaçu",
   "Sulina", "Verê"
-]
+],
  "Centro-Sul Paranaense": [
   "Bituruna", "Candói", "Cantagalo", "Espigão Alto do Iguaçu", "Foz do Jordão", "Goioxim", "Guamiranga",
   "Guarapuava", "Imbituva", "Inácio Martins", "Irati", "Laranjeiras do Sul", "Mallet", "Palmital", "Pinhão",
   "Pitanga", "Prudentópolis", "Rebouças", "Reserva do Iguaçu", "Rio Bonito do Iguaçu", "Rio Azul",
   "Teixeira Soares", "Turvo", "Virmond"
-]
+],
   "Sudeste Paranaense": [
   "Antônio Olinto", "Cruz Machado", "General Carneiro", "Mallet", "Paulo Frontin", "Porto Vitória",
   "São João do Triunfo", "São Mateus do Sul", "União da Vitória", "Bituruna", "Doutor Ulysses", "Rio Branco do Sul"
-]
+],
  "Metropolitana de Curitiba": [
   "Adrianópolis", "Agudos do Sul", "Almirante Tamandaré", "Araucária", "Balsa Nova", "Bocaiúva do Sul",
   "Campina Grande do Sul", "Campo Largo", "Campo Magro", "Cerro Azul", "Colombo", "Contenda", "Curitiba",
