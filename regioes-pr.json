@@ -9,7 +9,7 @@
   "Querência do Norte", "Rondon", "Santa Cruz de Monte Castelo", "Santa Isabel do Ivaí", "Santa Mônica",
   "Santo Antônio do Caiuá", "São Carlos do Ivaí", "São João do Caiuá", "São Jorge do Patrocínio",
   "São Manoel do Paraná", "São Pedro do Paraná", "São Tomé", "Tamboara", "Tapejara", "Tapira", "Terra Rica",
-  "Tuneiras do Oeste", "Umuarama", "Xambrê"
+  "Tuneiras do Oeste", "Umuarama", "Xambrê","Tapejara", "Uniflor", "Alto Paraíso"
 ],
 "Norte Central Paranaense": [
   "Ângulo", "Arapongas", "Arapuã", "Astorga", "Apucarana", "Atalaia", "Bom Sucesso", "Cambé", "Centenário do Sul",
@@ -27,7 +27,7 @@
   "Nova Santa Bárbara", "Quatiguá", "Ribeirão Claro", "Ribeirão do Pinhal", "Santa Amélia", "Santa Cecília do Pavão",
   "Santa Mariana", "Santana do Itararé", "Santo Antônio do Paraíso", "Santo Antônio da Platina", "São Jerônimo da Serra",
   "São João do Triunfo", "São José da Boa Vista", "São Sebastião da Amoreira", "Sapopema", "Sertaneja", "Siqueira Campos",
-  "Tomazina", "Uraí", "Wenceslau Braz"
+  "Tomazina", "Uraí", "Wenceslau Braz", "Sertaneja", "Siqueira Campos"
 ],
   "Centro Ocidental Paranaense": [
   "Altamira do Paraná", "Araruna", "Barbosa Ferraz", "Boa Esperança", "Campina da Lagoa", "Campo Mourão",
@@ -47,7 +47,7 @@
   "Mercedes", "Missal", "Nova Aurora", "Nova Santa Rosa", "Palotina", "Pato Bragado", "Quatro Pontes",
   "Ramilândia", "Santa Helena", "Santa Lúcia", "Santa Tereza do Oeste", "São José das Palmeiras",
   "São Miguel do Iguaçu", "São Pedro do Iguaçu", "Serranópolis do Iguaçu", "Terra Roxa", "Toledo",
-  "Três Barras do Paraná", "Vera Cruz do Oeste"
+  "Três Barras do Paraná", "Vera Cruz do Oeste", "Terra Roxa", "Tupãssi"
 ],
 
  "Sudoeste Paranaense": [
@@ -57,13 +57,13 @@
   "Mariópolis", "Marmeleiro", "Nova Esperança do Sudoeste", "Nova Prata do Iguaçu", "Pato Branco",
   "Pinhal de São Bento", "Planalto", "Pranchita", "Realeza", "Renascença", "Salgado Filho",
   "Santa Izabel do Oeste", "Santo Antônio do Sudoeste", "São Jorge d'Oeste", "Saudade do Iguaçu",
-  "Sulina", "Verê"
+  "Sulina", "Verê", "Sulina", "Vitorino"
 ],
  "Centro-Sul Paranaense": [
   "Bituruna", "Candói", "Cantagalo", "Espigão Alto do Iguaçu", "Foz do Jordão", "Goioxim", "Guamiranga",
   "Guarapuava", "Imbituva", "Inácio Martins", "Irati", "Laranjeiras do Sul", "Mallet", "Palmital", "Pinhão",
   "Pitanga", "Prudentópolis", "Rebouças", "Reserva do Iguaçu", "Rio Bonito do Iguaçu", "Rio Azul",
-  "Teixeira Soares", "Turvo", "Virmond"
+  "Teixeira Soares", "Turvo", "Virmond", "Teixeira Soares","Tibagi"
 ],
   "Sudeste Paranaense": [
   "Antônio Olinto", "Cruz Machado", "General Carneiro", "Mallet", "Paulo Frontin", "Porto Vitória",
@@ -74,6 +74,6 @@
   "Campina Grande do Sul", "Campo Largo", "Campo Magro", "Cerro Azul", "Colombo", "Contenda", "Curitiba",
   "Fazenda Rio Grande", "Itaperuçu", "Lapa", "Mandirituba", "Morretes", "Piên", "Pinhais", "Piraquara",
   "Quatro Barras", "Rio Branco do Sul", "São José dos Pinhais", "Tunas do Paraná", "Antonina", "Guaraqueçaba",
-  "Paranaguá"
+  "Paranaguá", "Tijucas do Sul", "Doutor Ulysses"
 ]
 }
