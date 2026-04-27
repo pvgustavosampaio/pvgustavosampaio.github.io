@@ -1,1 +1,961 @@
+import os
+import unicodedata
+import pandas as pd
+import streamlit as st
+import streamlit.components.v1 as components
 
+
+# ============================================================
+# CONFIGURAÇÕES GERAIS
+# ============================================================
+
+st.set_page_config(
+    page_title="Mapa Estratégico de Campanha",
+    page_icon="🗺️",
+    layout="wide"
+)
+
+ARQUIVO_DADOS = "dados_campanha.csv"
+
+COLUNAS = [
+    "municipio",
+    "regiao",
+    "responsavel",
+    "estimativa_votos",
+    "liderancas",
+    "escolas",
+    "instituicoes",
+    "prioridade",
+    "status",
+    "observacoes"
+]
+
+REGIOES_IBGE = [
+    "Noroeste Paranaense",
+    "Norte Central Paranaense",
+    "Norte Pioneiro Paranaense",
+    "Centro Ocidental Paranaense",
+    "Centro Oriental Paranaense",
+    "Oeste Paranaense",
+    "Sudoeste Paranaense",
+    "Centro-Sul Paranaense",
+    "Sudeste Paranaense",
+    "Metropolitana de Curitiba"
+]
+
+PRIORIDADES = [
+    "Alta",
+    "Média",
+    "Baixa"
+]
+
+STATUS_OPCOES = [
+    "Não iniciado",
+    "Em articulação",
+    "Em andamento",
+    "Consolidado",
+    "Atenção"
+]
+
+
+# ============================================================
+# FUNÇÕES AUXILIARES
+# ============================================================
+
+def normalizar_texto(texto):
+    """
+    Remove acentos, espaços duplicados e coloca em minúsculo.
+    Isso ajuda a comparar nomes de municípios sem erro.
+    """
+    if pd.isna(texto):
+        return ""
+
+    texto = str(texto)
+    texto = unicodedata.normalize("NFD", texto)
+    texto = texto.encode("ascii", "ignore").decode("utf-8")
+    texto = texto.replace("-", " ")
+    texto = " ".join(texto.split())
+    return texto.lower().strip()
+
+
+def criar_arquivo_se_nao_existir():
+    """
+    Cria o CSV vazio caso ele ainda não exista.
+    """
+    if not os.path.exists(ARQUIVO_DADOS):
+        df = pd.DataFrame(columns=COLUNAS)
+        df.to_csv(ARQUIVO_DADOS, index=False, encoding="utf-8")
+
+
+def carregar_dados():
+    """
+    Carrega os dados do CSV e garante que todas as colunas existam.
+    """
+    criar_arquivo_se_nao_existir()
+
+    df = pd.read_csv(ARQUIVO_DADOS, dtype=str, encoding="utf-8").fillna("")
+
+    for coluna in COLUNAS:
+        if coluna not in df.columns:
+            df[coluna] = ""
+
+    df = df[COLUNAS]
+
+    df["estimativa_votos"] = pd.to_numeric(
+        df["estimativa_votos"],
+        errors="coerce"
+    ).fillna(0).astype(int)
+
+    return df
+
+
+def salvar_dados(df):
+    """
+    Salva os dados no CSV.
+    """
+    df = df.copy()
+
+    for coluna in COLUNAS:
+        if coluna not in df.columns:
+            df[coluna] = ""
+
+    df = df[COLUNAS]
+
+    df["estimativa_votos"] = pd.to_numeric(
+        df["estimativa_votos"],
+        errors="coerce"
+    ).fillna(0).astype(int)
+
+    df.to_csv(ARQUIVO_DADOS, index=False, encoding="utf-8")
+
+
+def upsert_municipio(df, registro):
+    """
+    Se o município já existir, atualiza.
+    Se não existir, cadastra uma nova linha.
+    """
+    df = df.copy()
+
+    municipio_normalizado = normalizar_texto(registro["municipio"])
+
+    mascara = df["municipio"].apply(normalizar_texto) == municipio_normalizado
+
+    if mascara.any():
+        indice = df.index[mascara][0]
+        for coluna in COLUNAS:
+            df.at[indice, coluna] = registro[coluna]
+    else:
+        novo = pd.DataFrame([registro])
+        df = pd.concat([df, novo], ignore_index=True)
+
+    return df
+
+
+def aplicar_filtros(df, regioes, responsaveis, prioridades, status, busca):
+    """
+    Aplica filtros escolhidos pelo usuário.
+    """
+    filtrado = df.copy()
+
+    if regioes:
+        filtrado = filtrado[filtrado["regiao"].isin(regioes)]
+
+    if responsaveis:
+        filtrado = filtrado[filtrado["responsavel"].isin(responsaveis)]
+
+    if prioridades:
+        filtrado = filtrado[filtrado["prioridade"].isin(prioridades)]
+
+    if status:
+        filtrado = filtrado[filtrado["status"].isin(status)]
+
+    if busca.strip():
+        busca_normalizada = normalizar_texto(busca)
+
+        filtrado = filtrado[
+            filtrado.apply(
+                lambda linha:
+                    busca_normalizada in normalizar_texto(linha["municipio"])
+                    or busca_normalizada in normalizar_texto(linha["responsavel"])
+                    or busca_normalizada in normalizar_texto(linha["liderancas"]),
+                axis=1
+            )
+        ]
+
+    return filtrado
+
+
+# ============================================================
+# CARREGAMENTO INICIAL
+# ============================================================
+
+dados = carregar_dados()
+
+
+# ============================================================
+# SIDEBAR — CADASTRO
+# ============================================================
+
+st.sidebar.title("🧭 Painel de Cadastro")
+
+st.sidebar.caption(
+    "Cadastre ou atualize as informações estratégicas de cada município."
+)
+
+with st.sidebar.form("form_cadastro_municipio", clear_on_submit=False):
+    municipio = st.text_input("Município")
+
+    regiao = st.selectbox(
+        "Região IBGE",
+        REGIOES_IBGE
+    )
+
+    responsavel = st.text_input("Responsável pela área")
+
+    estimativa_votos = st.number_input(
+        "Estimativa de votos",
+        min_value=0,
+        step=100
+    )
+
+    prioridade = st.selectbox(
+        "Prioridade",
+        PRIORIDADES
+    )
+
+    status = st.selectbox(
+        "Status da articulação",
+        STATUS_OPCOES
+    )
+
+    liderancas = st.text_area(
+        "Lideranças",
+        placeholder="Exemplo: João Silva; Maria Souza; Associação X"
+    )
+
+    escolas = st.text_area(
+        "Escolas parceiras",
+        placeholder="Exemplo: Escola Municipal A; Colégio Estadual B"
+    )
+
+    instituicoes = st.text_area(
+        "Instituições parceiras",
+        placeholder="Exemplo: Associação Comercial; Sindicato Rural"
+    )
+
+    observacoes = st.text_area(
+        "Observações",
+        placeholder="Anotações internas da equipe"
+    )
+
+    botao_salvar = st.form_submit_button("💾 Salvar ou atualizar município")
+
+if botao_salvar:
+    if not municipio.strip():
+        st.sidebar.error("Informe o nome do município.")
+    else:
+        registro = {
+            "municipio": municipio.strip(),
+            "regiao": regiao,
+            "responsavel": responsavel.strip(),
+            "estimativa_votos": int(estimativa_votos),
+            "liderancas": liderancas.strip(),
+            "escolas": escolas.strip(),
+            "instituicoes": instituicoes.strip(),
+            "prioridade": prioridade,
+            "status": status,
+            "observacoes": observacoes.strip()
+        }
+
+        dados = upsert_municipio(dados, registro)
+        salvar_dados(dados)
+        st.sidebar.success("Município salvo com sucesso.")
+
+
+# ============================================================
+# SIDEBAR — EXCLUSÃO
+# ============================================================
+
+st.sidebar.divider()
+
+with st.sidebar.expander("🗑️ Excluir cadastro"):
+    municipios_cadastrados = sorted(
+        [m for m in dados["municipio"].dropna().unique() if str(m).strip()]
+    )
+
+    if municipios_cadastrados:
+        municipio_excluir = st.selectbox(
+            "Município para excluir",
+            municipios_cadastrados
+        )
+
+        confirmar_exclusao = st.checkbox(
+            "Confirmo que desejo excluir este cadastro"
+        )
+
+        if st.button("Excluir município"):
+            if confirmar_exclusao:
+                dados = dados[
+                    dados["municipio"].apply(normalizar_texto)
+                    != normalizar_texto(municipio_excluir)
+                ]
+
+                salvar_dados(dados)
+                st.warning("Cadastro excluído. Recarregue a página se necessário.")
+            else:
+                st.error("Marque a confirmação antes de excluir.")
+    else:
+        st.info("Nenhum município cadastrado ainda.")
+
+
+# ============================================================
+# SIDEBAR — FILTROS
+# ============================================================
+
+st.sidebar.divider()
+st.sidebar.title("🔎 Filtros")
+
+filtro_busca = st.sidebar.text_input(
+    "Buscar",
+    placeholder="Município, responsável ou liderança"
+)
+
+filtro_regioes = st.sidebar.multiselect(
+    "Região",
+    REGIOES_IBGE
+)
+
+responsaveis_disponiveis = sorted(
+    [r for r in dados["responsavel"].dropna().unique() if str(r).strip()]
+)
+
+filtro_responsaveis = st.sidebar.multiselect(
+    "Responsável",
+    responsaveis_disponiveis
+)
+
+filtro_prioridades = st.sidebar.multiselect(
+    "Prioridade",
+    PRIORIDADES
+)
+
+filtro_status = st.sidebar.multiselect(
+    "Status",
+    STATUS_OPCOES
+)
+
+dados_filtrados = aplicar_filtros(
+    dados,
+    filtro_regioes,
+    filtro_responsaveis,
+    filtro_prioridades,
+    filtro_status,
+    filtro_busca
+)
+
+
+# ============================================================
+# CABEÇALHO
+# ============================================================
+
+st.title("🗺️ Mapa Estratégico de Campanha Política")
+
+st.caption(
+    "Sistema territorial para cadastro, visualização e acompanhamento de municípios."
+)
+
+st.info(
+    "Use dados agregados por município/região. Evite cadastrar dados pessoais de eleitores, alunos ou menores de idade sem autorização e base legal."
+)
+
+
+# ============================================================
+# INDICADORES
+# ============================================================
+
+total_municipios = dados_filtrados["municipio"].nunique()
+total_votos = int(dados_filtrados["estimativa_votos"].sum()) if not dados_filtrados.empty else 0
+total_responsaveis = dados_filtrados["responsavel"].replace("", pd.NA).dropna().nunique()
+total_alta_prioridade = len(dados_filtrados[dados_filtrados["prioridade"] == "Alta"])
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.metric("Municípios cadastrados", total_municipios)
+
+with col2:
+    st.metric("Votos estimados", f"{total_votos:,}".replace(",", "."))
+
+with col3:
+    st.metric("Responsáveis ativos", total_responsaveis)
+
+with col4:
+    st.metric("Alta prioridade", total_alta_prioridade)
+
+
+# ============================================================
+# ABAS PRINCIPAIS
+# ============================================================
+
+aba_mapa, aba_cadastros = st.tabs([
+    "🗺️ Mapa Interativo",
+    "📋 Cadastros"
+])
+
+
+# ============================================================
+# ABA MAPA
+# ============================================================
+
+with aba_mapa:
+    dados_json = dados_filtrados.to_json(
+        orient="records",
+        force_ascii=False
+    )
+
+    html_mapa = """
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+
+<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
+<style>
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background: #f0f8f5;
+    font-family: Arial, sans-serif;
+  }
+
+  #container-principal {
+    display: flex;
+    width: 100%;
+    height: 780px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #d9e7dd;
+    background: #ffffff;
+  }
+
+  #mapa-parana {
+    width: 70%;
+    height: 100%;
+    background: #eaf5ee;
+  }
+
+  #painel {
+    width: 30%;
+    min-width: 330px;
+    background: #ffffff;
+    padding: 20px;
+    box-shadow: -4px 0 14px rgba(0,0,0,0.10);
+    overflow-y: auto;
+  }
+
+  .titulo-painel {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1B5E20;
+    margin-bottom: 6px;
+  }
+
+  .subtitulo {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 18px;
+  }
+
+  .card {
+    background: #f7fbf8;
+    border-left: 5px solid #2E7D32;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+  }
+
+  .card-vermelho {
+    border-left-color: #E53935;
+  }
+
+  .card-azul {
+    border-left-color: #1976D2;
+  }
+
+  .card-roxo {
+    border-left-color: #8E24AA;
+  }
+
+  .label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 700;
+    color: #555;
+    margin-bottom: 4px;
+  }
+
+  .valor {
+    font-size: 15px;
+    color: #222;
+  }
+
+  .votos {
+    font-size: 34px;
+    color: #1B5E20;
+    font-weight: 800;
+  }
+
+  ul {
+    margin: 6px 0 0 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 4px;
+  }
+
+  #legenda {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.18);
+    padding: 10px 14px;
+    font-size: 12px;
+    z-index: 999;
+    max-width: 260px;
+  }
+
+  #legenda .linha {
+    margin: 4px 0;
+    white-space: nowrap;
+  }
+
+  #legenda span {
+    display:inline-block;
+    width:12px;
+    height:12px;
+    margin-right:6px;
+    border-radius:3px;
+    vertical-align: middle;
+  }
+
+  .aviso {
+    padding: 10px;
+    background: #fff8e1;
+    border-left: 5px solid #fbc02d;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #5d4a00;
+    margin-bottom: 14px;
+  }
+
+  @media (max-width: 900px) {
+    #container-principal {
+      flex-direction: column;
+      height: 1100px;
+    }
+
+    #mapa-parana {
+      width: 100%;
+      height: 620px;
+    }
+
+    #painel {
+      width: 100%;
+      min-width: 0;
+      height: 480px;
+      box-shadow: 0 -4px 14px rgba(0,0,0,0.10);
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<div id="container-principal">
+  <div id="mapa-parana"></div>
+
+  <div id="painel">
+    <div class="titulo-painel" id="titulo-municipio">Selecione um município</div>
+    <div class="subtitulo" id="subtitulo-municipio">
+      Clique em uma cidade no mapa para visualizar os dados cadastrados.
+    </div>
+
+    <div class="aviso" id="aviso-sem-cadastro">
+      O mapa mostra todos os municípios do Paraná. As informações aparecem quando houver cadastro salvo no sistema.
+    </div>
+
+    <div class="card">
+      <div class="label">Região</div>
+      <div class="valor" id="regiao">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Responsável pela área</div>
+      <div class="valor" id="responsavel">—</div>
+    </div>
+
+    <div class="card card-vermelho">
+      <div class="label">Estimativa de votos</div>
+      <div class="votos" id="votos">—</div>
+    </div>
+
+    <div class="card card-azul">
+      <div class="label">Prioridade</div>
+      <div class="valor" id="prioridade">—</div>
+    </div>
+
+    <div class="card card-roxo">
+      <div class="label">Status</div>
+      <div class="valor" id="status">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Lideranças</div>
+      <div class="valor" id="liderancas">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Escolas parceiras</div>
+      <div class="valor" id="escolas">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Instituições parceiras</div>
+      <div class="valor" id="instituicoes">—</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Observações</div>
+      <div class="valor" id="observacoes">—</div>
+    </div>
+  </div>
+</div>
+
+<div id="legenda">
+  <div><strong>Regiões IBGE do Paraná</strong></div>
+  <div class="linha"><span style="background:#FFD54F"></span>Noroeste</div>
+  <div class="linha"><span style="background:#4CAF50"></span>Norte Central</div>
+  <div class="linha"><span style="background:#81C784"></span>Norte Pioneiro</div>
+  <div class="linha"><span style="background:#FBC02D"></span>Centro Ocidental</div>
+  <div class="linha"><span style="background:#388E3C"></span>Centro Oriental</div>
+  <div class="linha"><span style="background:#2196F3"></span>Oeste</div>
+  <div class="linha"><span style="background:#1976D2"></span>Sudoeste</div>
+  <div class="linha"><span style="background:#8E24AA"></span>Centro-Sul</div>
+  <div class="linha"><span style="background:#5E35B1"></span>Sudeste</div>
+  <div class="linha"><span style="background:#E53935"></span>Metropolitana</div>
+</div>
+
+<script>
+am5.ready(async function() {
+
+  const dadosCampanha = __DADOS_CAMPANHA__;
+
+  const coresPorRegiao = {
+    "Noroeste Paranaense": "#FFD54F",
+    "Norte Central Paranaense": "#4CAF50",
+    "Norte Pioneiro Paranaense": "#81C784",
+    "Centro Ocidental Paranaense": "#FBC02D",
+    "Centro Oriental Paranaense": "#388E3C",
+    "Oeste Paranaense": "#2196F3",
+    "Sudoeste Paranaense": "#1976D2",
+    "Centro-Sul Paranaense": "#8E24AA",
+    "Sudeste Paranaense": "#5E35B1",
+    "Metropolitana de Curitiba": "#E53935"
+  };
+
+  function normalizar(str) {
+    if (!str) return "";
+    return String(str)
+      .normalize("NFD")
+      .replace(/[\\u0300-\\u036f]/g, "")
+      .replace(/['’`´]/g, "")
+      .replace(/-/g, " ")
+      .replace(/\\s+/g, " ")
+      .toLowerCase()
+      .trim();
+  }
+
+  function formatarNumero(valor) {
+    if (!valor && valor !== 0) return "—";
+    return Number(valor).toLocaleString("pt-BR");
+  }
+
+  function buscarRegistro(nomeCidade) {
+    const cidadeNormalizada = normalizar(nomeCidade);
+
+    return dadosCampanha.find(
+      item => normalizar(item.municipio) === cidadeNormalizada
+    );
+  }
+
+  function buscarRegiao(nomeCidade, regioesMunicipios) {
+    const cidadeNormalizada = normalizar(nomeCidade);
+
+    for (const regiao in regioesMunicipios) {
+      const lista = regioesMunicipios[regiao].map(cidade => normalizar(cidade));
+
+      if (lista.includes(cidadeNormalizada)) {
+        return regiao;
+      }
+    }
+
+    return null;
+  }
+
+  function preencherTexto(id, valor, vazio = "—") {
+    const elemento = document.getElementById(id);
+    elemento.textContent = valor && String(valor).trim() ? valor : vazio;
+  }
+
+  function preencherLista(id, texto) {
+    const elemento = document.getElementById(id);
+    elemento.innerHTML = "";
+
+    if (!texto || !String(texto).trim()) {
+      elemento.textContent = "—";
+      return;
+    }
+
+    const itens = String(texto)
+      .split(/;|\\n/)
+      .map(item => item.trim())
+      .filter(item => item.length > 0);
+
+    if (itens.length === 0) {
+      elemento.textContent = texto;
+      return;
+    }
+
+    const ul = document.createElement("ul");
+
+    itens.forEach(item => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      ul.appendChild(li);
+    });
+
+    elemento.appendChild(ul);
+  }
+
+  function atualizarPainel(nomeCidade, regiaoOficial, registro) {
+    preencherTexto("titulo-municipio", nomeCidade);
+    preencherTexto("subtitulo-municipio", registro ? "Dados estratégicos cadastrados" : "Município sem cadastro no filtro atual");
+
+    preencherTexto("regiao", registro?.regiao || regiaoOficial || "Região não identificada");
+    preencherTexto("responsavel", registro?.responsavel, "Sem responsável cadastrado");
+
+    document.getElementById("votos").textContent = registro
+      ? formatarNumero(registro.estimativa_votos)
+      : "0";
+
+    preencherTexto("prioridade", registro?.prioridade, "Sem prioridade cadastrada");
+    preencherTexto("status", registro?.status, "Sem status cadastrado");
+
+    preencherLista("liderancas", registro?.liderancas);
+    preencherLista("escolas", registro?.escolas);
+    preencherLista("instituicoes", registro?.instituicoes);
+    preencherTexto("observacoes", registro?.observacoes, "Sem observações");
+
+    const aviso = document.getElementById("aviso-sem-cadastro");
+
+    if (registro) {
+      aviso.style.display = "none";
+    } else {
+      aviso.style.display = "block";
+      aviso.textContent = "Este município ainda não possui cadastro ou foi ocultado pelos filtros aplicados.";
+    }
+  }
+
+  const root = am5.Root.new("mapa-parana");
+  root.setThemes([am5themes_Animated.new(root)]);
+
+  const chart = root.container.children.push(
+    am5map.MapChart.new(root, {
+      projection: am5map.geoMercator(),
+      panX: "translateX",
+      panY: "translateY",
+      wheelY: "zoom"
+    })
+  );
+
+  chart.set("zoomControl", am5map.ZoomControl.new(root, {}));
+
+  const geoUrl = "https://pvgustavosampaio.github.io/geojs-41-mun.json";
+  const regioesUrl = "https://pvgustavosampaio.github.io/regioes-pr.json";
+
+  const geoData = await fetch(geoUrl).then(r => r.json());
+
+  let regioesMunicipios = {};
+
+  try {
+    regioesMunicipios = await fetch(regioesUrl).then(r => r.json());
+  } catch (erro) {
+    console.warn("Não foi possível carregar o JSON de regiões:", erro);
+  }
+
+  const polygonSeries = chart.series.push(
+    am5map.MapPolygonSeries.new(root, {
+      geoJSON: geoData
+    })
+  );
+
+  polygonSeries.mapPolygons.template.setAll({
+    tooltipText: "{name}",
+    interactive: true,
+    stroke: am5.color(0xffffff),
+    strokeWidth: 0.35
+  });
+
+  let poligonoSelecionado = null;
+
+  polygonSeries.events.on("datavalidated", function() {
+    polygonSeries.mapPolygons.each(function(polygon) {
+      const nomeCidade = polygon.dataItem.dataContext.name;
+      const regiaoEncontrada = buscarRegiao(nomeCidade, regioesMunicipios);
+      const registro = buscarRegistro(nomeCidade);
+
+      const cor = regiaoEncontrada && coresPorRegiao[regiaoEncontrada]
+        ? coresPorRegiao[regiaoEncontrada]
+        : "#C8E6C9";
+
+      polygon.set("fill", am5.color(cor));
+      polygon.set("fillOpacity", registro ? 0.95 : 0.55);
+
+      const textoTooltip = registro
+        ? `${nomeCidade}\\n${regiaoEncontrada || ""}\\nResponsável: ${registro.responsavel || "—"}\\nVotos: ${formatarNumero(registro.estimativa_votos)}`
+        : `${nomeCidade}\\n${regiaoEncontrada || ""}\\nSem cadastro`;
+
+      polygon.set("tooltipText", textoTooltip);
+    });
+  });
+
+  polygonSeries.mapPolygons.template.events.on("click", function(ev) {
+    const polygon = ev.target;
+    const nomeCidade = polygon.dataItem.dataContext.name;
+
+    const regiaoEncontrada = buscarRegiao(nomeCidade, regioesMunicipios);
+    const registro = buscarRegistro(nomeCidade);
+
+    if (poligonoSelecionado) {
+      poligonoSelecionado.set("stroke", am5.color(0xffffff));
+      poligonoSelecionado.set("strokeWidth", 0.35);
+    }
+
+    poligonoSelecionado = polygon;
+    poligonoSelecionado.set("stroke", am5.color(0x111111));
+    poligonoSelecionado.set("strokeWidth", 2);
+
+    atualizarPainel(nomeCidade, regiaoEncontrada, registro);
+  });
+
+  chart.appear(1000, 100);
+});
+</script>
+
+</body>
+</html>
+"""
+
+    html_mapa = html_mapa.replace("__DADOS_CAMPANHA__", dados_json)
+
+    components.html(
+        html_mapa,
+        height=820,
+        scrolling=False
+    )
+
+
+# ============================================================
+# ABA CADASTROS
+# ============================================================
+
+with aba_cadastros:
+    st.subheader("📋 Cadastros salvos")
+
+    st.caption(
+        "Você pode editar diretamente na tabela abaixo. Depois, clique em salvar alterações."
+    )
+
+    if dados.empty:
+        st.info("Nenhum município cadastrado ainda.")
+    else:
+        dados_editados = st.data_editor(
+            dados,
+            use_container_width=True,
+            num_rows="dynamic",
+            column_config={
+                "municipio": st.column_config.TextColumn(
+                    "Município",
+                    required=True
+                ),
+                "regiao": st.column_config.SelectboxColumn(
+                    "Região",
+                    options=REGIOES_IBGE
+                ),
+                "responsavel": st.column_config.TextColumn(
+                    "Responsável"
+                ),
+                "estimativa_votos": st.column_config.NumberColumn(
+                    "Estimativa de votos",
+                    min_value=0,
+                    step=100
+                ),
+                "liderancas": st.column_config.TextColumn(
+                    "Lideranças"
+                ),
+                "escolas": st.column_config.TextColumn(
+                    "Escolas parceiras"
+                ),
+                "instituicoes": st.column_config.TextColumn(
+                    "Instituições parceiras"
+                ),
+                "prioridade": st.column_config.SelectboxColumn(
+                    "Prioridade",
+                    options=PRIORIDADES
+                ),
+                "status": st.column_config.SelectboxColumn(
+                    "Status",
+                    options=STATUS_OPCOES
+                ),
+                "observacoes": st.column_config.TextColumn(
+                    "Observações"
+                )
+            }
+        )
+
+        col_salvar, col_download = st.columns([1, 1])
+
+        with col_salvar:
+            if st.button("💾 Salvar alterações da tabela"):
+                salvar_dados(dados_editados)
+                st.success("Alterações salvas com sucesso.")
+
+        with col_download:
+            csv_exportado = dados.to_csv(index=False).encode("utf-8")
+
+            st.download_button(
+                label="⬇️ Baixar CSV",
+                data=csv_exportado,
+                file_name="dados_campanha.csv",
+                mime="text/csv"
+            )
+
+    st.divider()
+
+    st.subheader("Resumo dos dados filtrados")
+
+    if dados_filtrados.empty:
+        st.warning("Nenhum cadastro encontrado com os filtros atuais.")
+    else:
+        st.dataframe(
+            dados_filtrados,
+            use_container_width=True
+        )
