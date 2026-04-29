@@ -1,0 +1,644 @@
+<t t-name="website_studio.mapa-londrina-bairros">
+  <t t-call="website.layout">
+
+    <t t-set="liderancas" t-value="request.env['x_liderancas_londrina'].sudo().search([])"/>
+
+    <div id="mapa-londrina-bairros-app">
+
+      <style>
+        #mapa-londrina-bairros-app {
+          font-family: Arial, sans-serif;
+          background: #f3f6f9;
+          padding: 30px 15px;
+          color: #1f2937;
+        }
+
+        .ml-container {
+          max-width: 1350px;
+          margin: 0 auto;
+        }
+
+        .ml-header {
+          text-align: center;
+          margin-bottom: 25px;
+        }
+
+        .ml-header h1 {
+          font-size: 34px;
+          font-weight: 900;
+          margin: 0 0 8px;
+          color: #111827;
+        }
+
+        .ml-header p {
+          color: #6b7280;
+          margin: 0;
+        }
+
+        .ml-layout {
+          display: grid;
+          grid-template-columns: 1.4fr 0.8fr;
+          gap: 24px;
+        }
+
+        .ml-card {
+          background: #fff;
+          border-radius: 22px;
+          padding: 22px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        .ml-map-box {
+          width: 100%;
+          overflow: auto;
+          border-radius: 18px;
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+        }
+
+        svg {
+          width: 100%;
+          height: auto;
+          min-width: 780px;
+        }
+
+        .bairro {
+          stroke: #111827;
+          stroke-width: 1.2;
+          cursor: pointer;
+          transition: 0.25s ease;
+        }
+
+        .bairro:hover {
+          filter: brightness(1.08);
+          stroke-width: 3;
+        }
+
+        .bairro.active {
+          stroke: #000;
+          stroke-width: 4;
+          filter: brightness(1.12);
+        }
+
+        .label-bairro {
+          pointer-events: none;
+          font-size: 12px;
+          font-weight: 700;
+          fill: #111827;
+          text-anchor: middle;
+          dominant-baseline: middle;
+        }
+
+        .label-regiao {
+          pointer-events: none;
+          font-size: 22px;
+          font-weight: 900;
+          fill: rgba(120, 40, 90, 0.45);
+          text-anchor: middle;
+          dominant-baseline: middle;
+        }
+
+        .regiao-norte {
+          fill: #fff200;
+        }
+
+        .regiao-oeste {
+          fill: #00e88a;
+        }
+
+        .regiao-central {
+          fill: #ffffff;
+        }
+
+        .regiao-leste {
+          fill: #8beef2;
+        }
+
+        .regiao-sul {
+          fill: #fff68a;
+        }
+
+        .ml-side-title {
+          font-size: 23px;
+          font-weight: 900;
+          margin-bottom: 6px;
+        }
+
+        .ml-selected {
+          color: #6b7280;
+          font-size: 14px;
+          margin-bottom: 16px;
+        }
+
+        .ml-search {
+          width: 100%;
+          padding: 12px 14px;
+          border-radius: 14px;
+          border: 1px solid #d1d5db;
+          margin-bottom: 14px;
+          font-size: 15px;
+        }
+
+        .ml-filter-area {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-bottom: 18px;
+        }
+
+        .ml-filter-btn {
+          border: none;
+          border-radius: 999px;
+          padding: 8px 13px;
+          font-size: 13px;
+          font-weight: 800;
+          cursor: pointer;
+          background: #e5e7eb;
+          color: #111827;
+        }
+
+        .ml-filter-btn.active,
+        .ml-filter-btn:hover {
+          background: #111827;
+          color: white;
+        }
+
+        .ml-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          max-height: 600px;
+          overflow-y: auto;
+          padding-right: 5px;
+        }
+
+        .ml-person {
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          padding: 14px;
+          background: #ffffff;
+        }
+
+        .ml-person h3 {
+          margin: 0 0 7px;
+          font-size: 17px;
+          font-weight: 900;
+        }
+
+        .ml-tag {
+          display: inline-block;
+          background: #eef2ff;
+          color: #3730a3;
+          font-size: 12px;
+          font-weight: 800;
+          border-radius: 999px;
+          padding: 4px 9px;
+          margin: 2px 3px 7px 0;
+        }
+
+        .ml-person p {
+          font-size: 14px;
+          color: #4b5563;
+          margin: 5px 0;
+        }
+
+        .ml-empty {
+          padding: 20px;
+          border-radius: 16px;
+          border: 1px dashed #d1d5db;
+          color: #6b7280;
+          text-align: center;
+          background: #f9fafb;
+        }
+
+        @media (max-width: 1000px) {
+          .ml-layout {
+            grid-template-columns: 1fr;
+          }
+        }
+      </style>
+
+      <div class="ml-container">
+
+        <div class="ml-header">
+          <h1>Mapa Estratégico de Londrina</h1>
+          <p>Regiões, bairros e lideranças conectados ao Odoo.</p>
+        </div>
+
+        <div class="ml-layout">
+
+          <div class="ml-card">
+            <div class="ml-map-box">
+
+              <svg viewBox="0 0 1000 820" xmlns="http://www.w3.org/2000/svg">
+
+                <!-- =======================
+                     REGIÃO NORTE
+                ======================== -->
+
+                <polygon class="bairro regiao-norte" data-regiao="NORTE" data-bairro="ELDORADO" points="190,70 370,55 370,150 215,155 160,120"/>
+                <text class="label-bairro" x="275" y="110">Eldorado</text>
+
+                <polygon class="bairro regiao-norte" data-regiao="NORTE" data-bairro="HEIMTAL" points="500,40 690,45 690,145 515,145 475,95"/>
+                <text class="label-bairro" x="590" y="95">Heimtal</text>
+
+                <polygon class="bairro regiao-norte" data-regiao="NORTE" data-bairro="PARIGOT DE SOUZA" points="375,150 455,145 455,250 375,250"/>
+                <text class="label-bairro" x="415" y="198">Parigot</text>
+                <text class="label-bairro" x="415" y="214">de Souza</text>
+
+                <polygon class="bairro regiao-norte" data-regiao="NORTE" data-bairro="VIVI XAVIER" points="455,145 555,145 555,255 455,250"/>
+                <text class="label-bairro" x="505" y="200">Vivi</text>
+                <text class="label-bairro" x="505" y="216">Xavier</text>
+
+                <polygon class="bairro regiao-norte" data-regiao="NORTE" data-bairro="CINCO CONJUNTOS" points="555,145 665,145 660,255 555,255"/>
+                <text class="label-bairro" x="610" y="198">Cinco</text>
+                <text class="label-bairro" x="610" y="214">Conjuntos</text>
+
+                <polygon class="bairro regiao-norte" data-regiao="NORTE" data-bairro="CIDADE INDUSTRIAL" points="665,145 890,130 910,250 660,255"/>
+                <text class="label-bairro" x="770" y="195">Cidade Industrial</text>
+
+                <polygon class="bairro regiao-norte" data-regiao="NORTE" data-bairro="OURO VERDE" points="375,250 455,250 455,325 375,325"/>
+                <text class="label-bairro" x="415" y="288">Ouro</text>
+                <text class="label-bairro" x="415" y="304">Verde</text>
+
+                <polygon class="bairro regiao-norte" data-regiao="NORTE" data-bairro="AUTÓDROMO" points="455,255 555,255 555,335 455,335"/>
+                <text class="label-bairro" x="505" y="296">Autódromo</text>
+
+                <polygon class="bairro regiao-norte" data-regiao="NORTE" data-bairro="PACAEMBU" points="555,255 660,255 655,335 555,335"/>
+                <text class="label-bairro" x="607" y="296">Pacaembu</text>
+
+                <polygon class="bairro regiao-norte" data-regiao="NORTE" data-bairro="COLISEU" points="375,325 455,325 455,385 375,385"/>
+                <text class="label-bairro" x="415" y="356">Coliseu</text>
+
+
+                <!-- =======================
+                     REGIÃO OESTE
+                ======================== -->
+
+                <polygon class="bairro regiao-oeste" data-regiao="OESTE" data-bairro="PEROBINHA" points="85,150 375,150 375,250 120,245 55,205"/>
+                <text class="label-bairro" x="235" y="205">Perobinha</text>
+
+                <polygon class="bairro regiao-oeste" data-regiao="OESTE" data-bairro="CILO 3" points="55,205 375,250 375,330 115,330 50,270"/>
+                <text class="label-bairro" x="175" y="288">Cilo 3</text>
+
+                <polygon class="bairro regiao-oeste" data-regiao="OESTE" data-bairro="CILO 2" points="70,330 250,330 245,410 95,405"/>
+                <text class="label-bairro" x="165" y="370">Cilo 2</text>
+
+                <polygon class="bairro regiao-oeste" data-regiao="OESTE" data-bairro="LEONOR" points="250,330 375,330 375,405 245,410"/>
+                <text class="label-bairro" x="310" y="370">Leonor</text>
+
+                <polygon class="bairro regiao-oeste" data-regiao="OESTE" data-bairro="BANDEIRANTES" points="245,410 375,405 375,455 230,455"/>
+                <text class="label-bairro" x="305" y="433">Bandeirantes</text>
+
+                <polygon class="bairro regiao-oeste" data-regiao="OESTE" data-bairro="SHANGRI-LÁ" points="375,385 455,385 455,440 375,455"/>
+                <text class="label-bairro" x="415" y="415">Shangri-lá</text>
+
+                <polygon class="bairro regiao-oeste" data-regiao="OESTE" data-bairro="JAMAICA" points="245,455 375,455 375,525 250,525"/>
+                <text class="label-bairro" x="312" y="490">Jamaica</text>
+
+                <polygon class="bairro regiao-oeste" data-regiao="OESTE" data-bairro="SABARÁ" points="100,430 245,410 250,525 120,525 80,480"/>
+                <text class="label-bairro" x="170" y="475">Sabará</text>
+
+                <polygon class="bairro regiao-oeste" data-regiao="OESTE" data-bairro="OLÍMPICO" points="85,525 250,525 250,625 60,625 40,575"/>
+                <text class="label-bairro" x="150" y="575">Olímpico</text>
+
+                <polygon class="bairro regiao-oeste" data-regiao="OESTE" data-bairro="ESPERANÇA" points="40,625 250,625 250,760 70,750 35,690"/>
+                <text class="label-bairro" x="150" y="685">Esperança</text>
+
+                <polygon class="bairro regiao-oeste" data-regiao="OESTE" data-bairro="UNIVERSIDADE" points="250,525 375,525 375,625 250,625"/>
+                <text class="label-bairro" x="312" y="575">Universidade</text>
+
+                <polygon class="bairro regiao-oeste" data-regiao="OESTE" data-bairro="PALHANO" points="375,455 455,455 455,590 375,625"/>
+                <text class="label-bairro" x="415" y="535">Palhano</text>
+
+
+                <!-- =======================
+                     REGIÃO CENTRAL
+                ======================== -->
+
+                <polygon class="bairro regiao-central" data-regiao="CENTRAL" data-bairro="VILA NOVA" points="455,385 515,385 515,450 455,440"/>
+                <text class="label-bairro" x="485" y="415">Vila Nova</text>
+
+                <polygon class="bairro regiao-central" data-regiao="CENTRAL" data-bairro="VILA RECREIO" points="515,385 575,385 575,450 515,450"/>
+                <text class="label-bairro" x="545" y="415">Vila</text>
+                <text class="label-bairro" x="545" y="431">Recreio</text>
+
+                <polygon class="bairro regiao-central" data-regiao="CENTRAL" data-bairro="VILA CASONI" points="575,385 635,385 635,450 575,450"/>
+                <text class="label-bairro" x="605" y="415">Vila</text>
+                <text class="label-bairro" x="605" y="431">Casoni</text>
+
+                <polygon class="bairro regiao-central" data-regiao="CENTRAL" data-bairro="CENTRO" points="455,450 575,450 575,535 455,535"/>
+                <text class="label-bairro" x="515" y="492">Centro</text>
+
+                <polygon class="bairro regiao-central" data-regiao="CENTRAL" data-bairro="PRESIDENTE" points="375,455 455,440 455,535 375,535"/>
+                <text class="label-bairro" x="415" y="492">Presidente</text>
+
+                <polygon class="bairro regiao-central" data-regiao="CENTRAL" data-bairro="QUEBEC" points="375,535 455,535 455,610 375,590"/>
+                <text class="label-bairro" x="415" y="565">Quebec</text>
+
+                <polygon class="bairro regiao-central" data-regiao="CENTRAL" data-bairro="HIGIENÓPOLIS" points="455,535 515,535 515,610 455,610"/>
+                <text class="label-bairro" x="485" y="572">Higienópolis</text>
+
+                <polygon class="bairro regiao-central" data-regiao="CENTRAL" data-bairro="IPIRANGA" points="515,535 575,535 575,610 515,610"/>
+                <text class="label-bairro" x="545" y="572">Ipiranga</text>
+
+                <polygon class="bairro regiao-central" data-regiao="CENTRAL" data-bairro="VILA BRASIL" points="575,535 635,535 635,610 575,610"/>
+                <text class="label-bairro" x="605" y="565">Vila</text>
+                <text class="label-bairro" x="605" y="581">Brasil</text>
+
+                <polygon class="bairro regiao-central" data-regiao="CENTRAL" data-bairro="PETRÓPOLIS" points="575,610 635,610 635,675 575,675"/>
+                <text class="label-bairro" x="605" y="642">Petrópolis</text>
+
+                <polygon class="bairro regiao-central" data-regiao="CENTRAL" data-bairro="BELA SUÍÇA" points="515,610 575,610 575,675 515,675"/>
+                <text class="label-bairro" x="545" y="642">Bela Suíça</text>
+
+
+                <!-- =======================
+                     REGIÃO LESTE
+                ======================== -->
+
+                <polygon class="bairro regiao-leste" data-regiao="LESTE" data-bairro="INDÚSTRIAS LEVES" points="635,335 720,335 720,400 635,385"/>
+                <text class="label-bairro" x="675" y="365">Indústrias</text>
+                <text class="label-bairro" x="675" y="381">Leves</text>
+
+                <polygon class="bairro regiao-leste" data-regiao="LESTE" data-bairro="LINDÓIA" points="720,250 910,250 920,380 720,400"/>
+                <text class="label-bairro" x="815" y="325">Lindóia</text>
+
+                <polygon class="bairro regiao-leste" data-regiao="LESTE" data-bairro="IDEAL" points="635,400 720,400 720,470 635,450"/>
+                <text class="label-bairro" x="675" y="435">Ideal</text>
+
+                <polygon class="bairro regiao-leste" data-regiao="LESTE" data-bairro="CIDADE INDUSTRIAL 2" points="720,400 920,380 920,480 720,470"/>
+                <text class="label-bairro" x="815" y="430">Cidade Industrial 2</text>
+
+                <polygon class="bairro regiao-leste" data-regiao="LESTE" data-bairro="FRATERNIDADE" points="635,450 720,470 720,535 635,535"/>
+                <text class="label-bairro" x="675" y="492">Fraternidade</text>
+
+                <polygon class="bairro regiao-leste" data-regiao="LESTE" data-bairro="INTERLAGOS" points="720,470 805,470 805,535 720,535"/>
+                <text class="label-bairro" x="762" y="502">Interlagos</text>
+
+                <polygon class="bairro regiao-leste" data-regiao="LESTE" data-bairro="BRASÍLIA" points="635,535 720,535 720,600 635,610"/>
+                <text class="label-bairro" x="675" y="568">Brasília</text>
+
+                <polygon class="bairro regiao-leste" data-regiao="LESTE" data-bairro="ANTARES" points="720,535 805,535 805,610 720,600"/>
+                <text class="label-bairro" x="762" y="572">Antares</text>
+
+                <polygon class="bairro regiao-leste" data-regiao="LESTE" data-bairro="AEROPORTO" points="635,610 720,600 720,675 635,675"/>
+                <text class="label-bairro" x="675" y="642">Aeroporto</text>
+
+                <polygon class="bairro regiao-leste" data-regiao="LESTE" data-bairro="HU" points="720,610 805,610 805,675 720,675"/>
+                <text class="label-bairro" x="762" y="642">HU</text>
+
+                <polygon class="bairro regiao-leste" data-regiao="LESTE" data-bairro="ERNANI" points="805,535 920,480 935,620 805,675"/>
+                <text class="label-bairro" x="870" y="590">Ernani</text>
+
+                <polygon class="bairro regiao-leste" data-regiao="LESTE" data-bairro="LON RITA" points="920,480 970,500 955,680 935,620"/>
+                <text class="label-bairro" x="940" y="575">Lon Rita</text>
+
+                <polygon class="bairro regiao-leste" data-regiao="LESTE" data-bairro="CALIFÓRNIA" points="720,675 935,620 920,740 720,740"/>
+                <text class="label-bairro" x="815" y="705">Califórnia</text>
+
+
+                <!-- =======================
+                     REGIÃO SUL
+                ======================== -->
+
+                <polygon class="bairro regiao-sul" data-regiao="SUL" data-bairro="GUANABARA" points="455,675 575,675 575,735 455,735"/>
+                <text class="label-bairro" x="515" y="705">Guanabara</text>
+
+                <polygon class="bairro regiao-sul" data-regiao="SUL" data-bairro="TUCANOS" points="575,675 720,675 720,735 575,735"/>
+                <text class="label-bairro" x="647" y="705">Tucanos</text>
+
+                <polygon class="bairro regiao-sul" data-regiao="SUL" data-bairro="VIVENDAS DO ARVOREDO" points="375,735 575,735 575,810 375,810"/>
+                <text class="label-bairro" x="475" y="770">Vivendas do Arvoredo</text>
+
+                <polygon class="bairro regiao-sul" data-regiao="SUL" data-bairro="INGLATERRA" points="575,735 720,735 720,810 575,810"/>
+                <text class="label-bairro" x="647" y="770">Inglaterra</text>
+
+                <polygon class="bairro regiao-sul" data-regiao="SUL" data-bairro="PIZZA" points="720,740 880,740 880,810 720,810"/>
+                <text class="label-bairro" x="800" y="775">Pizza</text>
+
+                <polygon class="bairro regiao-sul" data-regiao="SUL" data-bairro="CAFEZAL" points="575,810 720,810 720,900 575,900"/>
+                <text class="label-bairro" x="647" y="855">Cafezal</text>
+
+                <polygon class="bairro regiao-sul" data-regiao="SUL" data-bairro="PARQUE DAS INDÚSTRIAS" points="720,810 880,810 880,900 720,900"/>
+                <text class="label-bairro" x="800" y="850">Parque das</text>
+                <text class="label-bairro" x="800" y="866">Indústrias</text>
+
+                <polygon class="bairro regiao-sul" data-regiao="SUL" data-bairro="CHÁCARA SÃO MIGUEL" points="430,810 575,810 575,900 430,900"/>
+                <text class="label-bairro" x="502" y="850">Chácara</text>
+                <text class="label-bairro" x="502" y="866">São Miguel</text>
+
+                <polygon class="bairro regiao-sul" data-regiao="SUL" data-bairro="SALTINHO" points="720,900 820,900 820,960 720,960"/>
+                <text class="label-bairro" x="770" y="930">Saltinho</text>
+
+                <polygon class="bairro regiao-sul" data-regiao="SUL" data-bairro="UNIÃO DA VITÓRIA" points="820,900 950,900 950,970 820,960"/>
+                <text class="label-bairro" x="885" y="930">União da</text>
+                <text class="label-bairro" x="885" y="946">Vitória</text>
+
+                <polygon class="bairro regiao-sul" data-regiao="SUL" data-bairro="TERRA BONITA" points="250,810 430,810 430,980 250,980"/>
+                <text class="label-bairro" x="340" y="895">Terra Bonita</text>
+
+
+                <!-- NOMES GRANDES DAS REGIÕES -->
+                <text class="label-regiao" x="615" y="115">NORTE</text>
+                <text class="label-regiao" x="210" y="540">OESTE</text>
+                <text class="label-regiao" x="525" y="490">CENTRAL</text>
+                <text class="label-regiao" x="805" y="520">LESTE</text>
+                <text class="label-regiao" x="620" y="790">SUL</text>
+
+              </svg>
+
+            </div>
+          </div>
+
+          <div class="ml-card">
+
+            <div class="ml-side-title">Lideranças</div>
+            <div class="ml-selected" id="ml-selected">
+              Clique em uma região ou bairro do mapa.
+            </div>
+
+            <input 
+              type="text" 
+              id="ml-search" 
+              class="ml-search" 
+              placeholder="Buscar por nome, bairro, região ou característica..."
+            />
+
+            <div class="ml-filter-area">
+              <button class="ml-filter-btn active" data-regiao="TODOS">Todos</button>
+              <button class="ml-filter-btn" data-regiao="NORTE">Norte</button>
+              <button class="ml-filter-btn" data-regiao="OESTE">Oeste</button>
+              <button class="ml-filter-btn" data-regiao="CENTRAL">Central</button>
+              <button class="ml-filter-btn" data-regiao="LESTE">Leste</button>
+              <button class="ml-filter-btn" data-regiao="SUL">Sul</button>
+            </div>
+
+            <div class="ml-list" id="ml-list">
+
+              <t t-foreach="liderancas" t-as="item">
+                <div 
+                  class="ml-person"
+                  t-att-data-regiao="(item.x_studio_regiao or '').upper()"
+                  t-att-data-bairro="(item.x_studio_bairro or '').upper()"
+                  t-att-data-search="('%s %s %s %s %s' % (
+                    item.x_name or '',
+                    item.x_studio_regiao or '',
+                    item.x_studio_bairro or '',
+                    item.x_studio_caracteristicas or '',
+                    item.x_studio_observacoes or ''
+                  )).lower()"
+                >
+
+                  <h3>
+                    <t t-esc="item.x_name"/>
+                  </h3>
+
+                  <span class="ml-tag">
+                    <t t-esc="item.x_studio_regiao"/>
+                  </span>
+
+                  <span class="ml-tag">
+                    <t t-esc="item.x_studio_bairro"/>
+                  </span>
+
+                  <p>
+                    <strong>Responsável:</strong>
+                    <t t-esc="item.x_studio_responsavel"/>
+                  </p>
+
+                  <p>
+                    <strong>Características:</strong>
+                    <t t-esc="item.x_studio_caracteristicas"/>
+                  </p>
+
+                  <p>
+                    <strong>Observações:</strong>
+                    <t t-esc="item.x_studio_observacoes"/>
+                  </p>
+
+                </div>
+              </t>
+
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          const bairros = document.querySelectorAll(".bairro");
+          const buttons = document.querySelectorAll(".ml-filter-btn");
+          const cards = document.querySelectorAll(".ml-person");
+          const searchInput = document.getElementById("ml-search");
+          const selected = document.getElementById("ml-selected");
+          const list = document.getElementById("ml-list");
+
+          let filtroRegiao = "TODOS";
+          let filtroBairro = "TODOS";
+
+          function normalize(text) {
+            return String(text || "")
+              .toUpperCase()
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "");
+          }
+
+          function aplicarFiltro() {
+            const busca = normalize(searchInput.value);
+            let visiveis = 0;
+
+            cards.forEach(function (card) {
+              const cardRegiao = normalize(card.dataset.regiao);
+              const cardBairro = normalize(card.dataset.bairro);
+              const cardSearch = normalize(card.dataset.search || card.textContent);
+
+              const matchRegiao = filtroRegiao === "TODOS" || cardRegiao === normalize(filtroRegiao);
+              const matchBairro = filtroBairro === "TODOS" || cardBairro === normalize(filtroBairro);
+              const matchBusca = !busca || cardSearch.includes(busca);
+
+              if (matchRegiao && matchBairro && matchBusca) {
+                card.style.display = "block";
+                visiveis++;
+              } else {
+                card.style.display = "none";
+              }
+            });
+
+            let empty = document.getElementById("ml-empty");
+
+            if (visiveis === 0) {
+              if (!empty) {
+                empty = document.createElement("div");
+                empty.id = "ml-empty";
+                empty.className = "ml-empty";
+                empty.textContent = "Nenhuma liderança encontrada para esse filtro.";
+                list.appendChild(empty);
+              }
+            } else {
+              if (empty) {
+                empty.remove();
+              }
+            }
+          }
+
+          function limparBairrosAtivos() {
+            bairros.forEach(function (b) {
+              b.classList.remove("active");
+            });
+          }
+
+          function limparBotoesAtivos() {
+            buttons.forEach(function (btn) {
+              btn.classList.remove("active");
+            });
+          }
+
+          bairros.forEach(function (bairro) {
+            bairro.addEventListener("click", function () {
+              filtroRegiao = bairro.dataset.regiao;
+              filtroBairro = bairro.dataset.bairro;
+
+              limparBairrosAtivos();
+              limparBotoesAtivos();
+
+              bairro.classList.add("active");
+
+              selected.textContent = "Selecionado: " + filtroBairro + " | Região " + filtroRegiao;
+
+              aplicarFiltro();
+            });
+          });
+
+          buttons.forEach(function (button) {
+            button.addEventListener("click", function () {
+              filtroRegiao = button.dataset.regiao;
+              filtroBairro = "TODOS";
+
+              limparBairrosAtivos();
+              limparBotoesAtivos();
+
+              button.classList.add("active");
+
+              if (filtroRegiao === "TODOS") {
+                selected.textContent = "Exibindo todas as regiões e bairros.";
+              } else {
+                selected.textContent = "Região selecionada: " + filtroRegiao;
+              }
+
+              aplicarFiltro();
+            });
+          });
+
+          searchInput.addEventListener("input", aplicarFiltro);
+
+          aplicarFiltro();
+        });
+      </script>
+
+    </div>
+
+  </t>
+</t>
